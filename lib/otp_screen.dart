@@ -1,124 +1,81 @@
 import 'package:flutter/material.dart';
-import 'verified_successfully_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class OtpScreen extends StatelessWidget {
+class OtpScreen extends StatefulWidget {
   const OtpScreen({super.key});
 
   @override
+  State<OtpScreen> createState() => _OtpScreenState();
+}
+
+class _OtpScreenState extends State<OtpScreen> {
+  final _otpController = TextEditingController();
+  bool _isLoading = false;
+
+  Future<void> _verifyOtp() async {
+    setState(() { _isLoading = true; });
+
+    // Get the email that was passed from the SignUpScreen
+    final email = ModalRoute.of(context)!.settings.arguments as String?;
+    final otp = _otpController.text.trim();
+
+    if (email == null || otp.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid OTP or Email'), backgroundColor: Colors.red));
+      setState(() { _isLoading = false; });
+      return;
+    }
+
+    try {
+      // ✅ This is the key function to verify the OTP
+      final AuthResponse res = await Supabase.instance.client.auth.verifyOTP(
+        type: OtpType.signup, // Specify that this is a signup OTP
+        token: otp,
+        email: email,
+      );
+
+      // If verification is successful, res.user will not be null, and the user is logged in!
+      if (mounted && res.user != null) {
+        // Go to home screen and clear all previous routes
+        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+      }
+    } on AuthException catch (error) {
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message), backgroundColor: Colors.red));
+      }
+    } catch (error) {
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('An unexpected error occurred'), backgroundColor: Colors.red));
+      }
+    }
+
+    if(mounted) {
+      setState(() { _isLoading = false; });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // A simple UI for OTP entry
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFFC7A7),
-              Color(0xFFFFD4B8),
-              Color(0xFFFEE2AD),
-            ],
-            stops: [0.0, 0.5, 1.0],
-          ),
-        ),
-        child: SafeArea(
+      appBar: AppBar(title: const Text('Enter OTP')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // 🐾 Paw Logo
-              Image.asset(
-                'assets/images/paw.png',
-                width: 100,
-                height: 100,
+              TextField(
+                controller: _otpController,
+                decoration: const InputDecoration(labelText: '6-Digit OTP Code'),
+                keyboardType: TextInputType.number,
               ),
-              const SizedBox(height: 40),
-
-              // 📧 OTP Instruction
-              const Text(
-                'Enter the OTP send in your email',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 30),
-
-              // 🔢 OTP Input
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 80),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.white.withOpacity(0.2),
-                        Colors.white.withOpacity(0.3),
-                      ],
+              const SizedBox(height: 20),
+              _isLoading
+                  ? const CircularProgressIndicator()
+                  : ElevatedButton(
+                      onPressed: _verifyOtp,
+                      child: const Text('Verify'),
                     ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.2),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const TextField(
-                    textAlign: TextAlign.center,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: '••••',
-                      hintStyle: TextStyle(
-                        color: Colors.grey,
-                        letterSpacing: 8,
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 14),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 150),
-
-              // ✅ Next Button
-              Align(
-                alignment: Alignment.bottomRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 24, bottom: 24),
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const VerifiedSuccessfullyScreen(),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: 55,
-                      height: 55,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF00C853),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.arrow_right_alt,
-                        color: Colors.black,
-                        size: 30,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
             ],
           ),
         ),
