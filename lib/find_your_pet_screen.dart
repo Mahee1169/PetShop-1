@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class FindYourPetScreen extends StatelessWidget {
   const FindYourPetScreen({super.key});
@@ -7,8 +7,8 @@ class FindYourPetScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // The body container now handles the background
       body: Container(
+        // The beautiful gradient background
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
@@ -23,88 +23,106 @@ class FindYourPetScreen extends StatelessWidget {
             stops: [0.0, 0.5, 1.0],
           ),
         ),
+        // SafeArea ensures content is not blocked by notches or system bars
         child: SafeArea(
-          // Using Center and Column to perfectly center the content
-          child: Center(
-            child: SingleChildScrollView( // Prevents overflow on small screens
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset(
-                    'assets/images/paw.png',
-                    width: 100,
-                    height: 100,
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Find Your Pet',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF7A1F00),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 30.0),
+            // ✅ A Column with Spacers to create the balanced layout
+            child: Column(
+              children: [
+                // This Spacer pushes the paw icon down from the top
+                const Spacer(flex: 2),
+
+                // Your main paw icon, now perfectly centered in the available space
+                Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF6B9D), Color(0xFFFF8E53)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                  ),
-                  const SizedBox(height: 100),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0), // Adjusted padding
-                    child: Text(
-                      'Make your bonding relationship\nbetween human & pets',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF7A1F00),
-                        fontWeight: FontWeight.w500,
-                        height: 1.5,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF8E53).withOpacity(0.3),
+                        blurRadius: 20,
+                        spreadRadius: 5,
                       ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Image.asset(
+                      'assets/images/paw.png',
+                      width: 80,
+                      height: 80,
+                      color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 40),
-                  GestureDetector(
-                    onTap: () {
-                      // This navigation works, but using named routes is better for consistency.
-                      // Navigator.pushNamed(context, '/login');
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      );
+                ),
+
+                // This Spacer pushes the text and button content down to the bottom
+                const Spacer(flex: 3),
+
+                // Main Heading
+                Text(
+                  'Find Your Pet',
+                  style: GoogleFonts.workSans(
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF7A1F00),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Subheading
+                Text(
+                  'Make your bonding relationship between human & pets',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.workSans(
+                    fontSize: 16,
+                    color: const Color(0xFF7A1F00).withOpacity(0.8),
+                  ),
+                ),
+                const SizedBox(height: 50),
+
+                // Full-width "Get Started" Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 55,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/login');
                     },
-                    child: Container(
-                      width: 160,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFFF6B6B), Color(0xFFFF9E6B)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFD6B68),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Get Started',
+                          style: GoogleFonts.workSans(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 5,
-                            offset: Offset(2, 3),
-                          ),
-                        ],
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.arrow_right_alt, color: Colors.white, size: 26),
-                          SizedBox(width: 4),
-                          Text(
-                            'Get Started',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+
+                // Padding for the bottom of the screen
+                const SizedBox(height: 40),
+              ],
             ),
           ),
         ),

@@ -23,6 +23,18 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
+            <!-- ✅ DEEP LINKING CONFIGURATION ADDED HERE -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- This callback URL must match the one you use in your Flutter code -->
+                <data
+                    android:scheme="io.supabase.petmarket"
+                    android:host="login-callback" />
+            </intent-filter>
+
         </activity>
         <meta-data
             android:name="flutterEmbedding"
@@ -35,3 +47,4 @@
         </intent>
     </queries>
 </manifest>
+

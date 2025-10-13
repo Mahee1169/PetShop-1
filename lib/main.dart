@@ -1,3 +1,4 @@
+import 'dart:async'; // Import for StreamSubscription
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -6,7 +7,7 @@ import 'cart_provider.dart';
 import 'cart_screen.dart';
 import 'checkout_screen.dart';
 import 'payment_screen.dart';
-import 'otp_screen.dart'; // ✅ 1. ADD THIS IMPORT
+import 'otp_screen.dart';
 
 // Your other screen imports
 import 'find_your_pet_screen.dart';
@@ -37,19 +38,54 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Supabase.initialize(
     url: 'https://irnsznncfwygxfnwwubh.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlybnN6bm5jZnd5Z3hmbnd3dWJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxNTMyMDksImV4cCI6MjA3NTcyOTIwOX0.gv7a_Xbml1u44ov3ihFbbdymhHjaObvbcONY94OpgCg',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlybnN6bm5jZnd5Z3hmbnd3dWJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk0NzE5MTcsImV4cCI6MjA0NTA0NzkxN30.C-0vR_Vz11WpLgM4Y-eLqM7FjL5C4mD3B73k1p9y_y0',
   );
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+// ✅ Changed to a StatefulWidget to listen for auth changes
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  // A key to control navigation from outside the widget tree
+  final _navigatorKey = GlobalKey<NavigatorState>();
+  late final StreamSubscription<AuthState> _authStateSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupAuthListener();
+  }
+
+  @override
+  void dispose() {
+    _authStateSubscription.cancel(); // Clean up the listener
+    super.dispose();
+  }
+
+  void _setupAuthListener() {
+    // This listens for when a user clicks the password reset link
+    _authStateSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      final event = data.event;
+      if (event == AuthChangeEvent.passwordRecovery) {
+        // When the link is clicked, this event fires.
+        // We use the navigatorKey to safely navigate to the new password screen.
+        _navigatorKey.currentState?.pushNamed('/newpassword');
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => CartProvider(),
       child: MaterialApp(
+        navigatorKey: _navigatorKey, // ✅ Assign the navigator key
         debugShowCheckedModeBanner: false,
         title: 'Pet Market',
         theme: ThemeData(
@@ -73,9 +109,10 @@ class MyApp extends StatelessWidget {
           '/cart': (context) => const CartScreen(),
           '/checkout': (context) => const CheckoutScreen(),
           '/payment': (context) => const PaymentScreen(),
-          '/otp': (context) => const OtpScreen(), // ✅ 2. ADD THIS ROUTE
+          '/otp': (context) => const OtpScreen(),
         },
       ),
     );
   }
 }
+

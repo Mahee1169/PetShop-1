@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'utils/validation_utils.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class NewPasswordScreen extends StatefulWidget {
   const NewPasswordScreen({super.key});
@@ -9,12 +10,71 @@ class NewPasswordScreen extends StatefulWidget {
 }
 
 class _NewPasswordScreenState extends State<NewPasswordScreen> {
-  final TextEditingController newPasswordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
+
+  Future<void> _updatePassword() async {
+    setState(() { _isLoading = true; });
+
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    if (password.isEmpty || confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all fields'), backgroundColor: Colors.red));
+      setState(() { _isLoading = false; });
+      return;
+    }
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Passwords do not match'), backgroundColor: Colors.red));
+      setState(() { _isLoading = false; });
+      return;
+    }
+
+    try {
+      // Since the user arrived here via the magic link, they are authenticated.
+      // We can now update their password directly.
+      await Supabase.instance.client.auth.updateUser(
+        UserAttributes(password: password),
+      );
+
+      if (mounted) {
+        // ✅ TYPO FIXED HERE
+        Navigator.pushNamedAndRemoveUntil(context, '/password-reset-success', (route) => false);
+      }
+    } on AuthException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message), backgroundColor: Colors.red));
+      }
+    } catch (error) {
+       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('An unexpected error occurred'), backgroundColor: Colors.red));
+      }
+    }
+
+    if (mounted) {
+      setState(() { _isLoading = false; });
+    }
+  }
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Set Your New Password'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF7A1F00)),
+      ),
+      extendBodyBehindAppBar: true,
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -22,186 +82,93 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFFC7A7),
-              Color(0xFFFFD4B8),
-              Color(0xFFFEE2AD),
-            ],
-            stops: [0.0, 0.5, 1.0],
+            colors: [Color(0xFFFFC7A7), Color(0xFFFFD4B8), Color(0xFFFEE2AD)],
           ),
         ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 40),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Image.asset(
-                  'assets/images/paw.png', // ✅ Correct image path
-                  height: 100,
-                  width: 100,
-                ),
-                const SizedBox(height: 50),
-
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.white.withOpacity(0.2),
-                        Colors.white.withOpacity(0.3),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.2),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: newPasswordController,
-                    obscureText: true,
-                    style: const TextStyle(
-                      color: Color(0xFF7A1F00),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Enter New Password',
-                      hintStyle: TextStyle(
-                        color: const Color(0xFF7A1F00).withOpacity(0.7),
-                        fontWeight: FontWeight.w500,
-                        fontSize: 16,
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.lock_outline,
-                        color: Color(0xFF7A1F00),
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                    ),
-                  ),
-                ),
+                _buildLabeledTextField(label: 'New Password', hintText: 'Enter your new password', controller: _passwordController, obscureText: true),
                 const SizedBox(height: 20),
-
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.white.withOpacity(0.2),
-                        Colors.white.withOpacity(0.3),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.2),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
+                _buildLabeledTextField(label: 'Confirm New Password', hintText: 'Re-enter your new password', controller: _confirmPasswordController, obscureText: true),
+                const SizedBox(height: 40),
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: ElevatedButton(
+                          onPressed: _updatePassword,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFD6B68),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            'Confirm New Password',
+                            style: GoogleFonts.workSans(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
                       ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: confirmPasswordController,
-                    obscureText: true,
-                    style: const TextStyle(
-                      color: Color(0xFF7A1F00),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Confirm Password',
-                      hintStyle: TextStyle(
-                        color: const Color(0xFF7A1F00).withOpacity(0.7),
-                        fontWeight: FontWeight.w500,
-                        fontSize: 16,
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.lock_outline,
-                        color: Color(0xFF7A1F00),
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 100),
-
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: GestureDetector(
-                    onTap: () {
-                      String newPass = newPasswordController.text;
-                      String confirmPass = confirmPasswordController.text;
-
-                      if (newPass.isEmpty || confirmPass.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please fill both fields ⚠️')),
-                        );
-                        return;
-                      }
-                      
-                      // Validate password strength
-                      String passwordError = ValidationUtils.getPasswordValidationMessage(newPass);
-                      if (passwordError.isNotEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(passwordError)),
-                        );
-                        return;
-                      }
-                      
-                      // Check if passwords match
-                      if (newPass != confirmPass) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Passwords do not match ❌')),
-                        );
-                        return;
-                      }
-                      
-                      // All validations passed
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Password Reset Successful ✅')),
-                      );
-                      // Navigate to login screen after successful password reset
-                      Navigator.pushNamedAndRemoveUntil(
-                        context,
-                        '/login',
-                        (route) => false,
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: const BoxDecoration(
-                        color: Colors.greenAccent,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.arrow_forward,
-                        color: Colors.black,
-                        size: 30,
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLabeledTextField({
+    required String label,
+    required String hintText,
+    required TextEditingController controller,
+    bool obscureText = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.workSans(
+            color: const Color(0xFF7A1F00),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          obscureText: obscureText,
+          style: GoogleFonts.workSans(
+            color: const Color(0xFF7A1F00),
+            fontWeight: FontWeight.w500,
+          ),
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: GoogleFonts.workSans(
+              color: const Color(0xFF7A1F00).withOpacity(0.7),
+              fontWeight: FontWeight.w500,
+            ),
+            filled: true,
+            fillColor: Colors.white.withOpacity(0.7),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          ),
+        ),
+      ],
     );
   }
 }
