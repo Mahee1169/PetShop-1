@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // 1. Import the provider package
-import 'cart_provider.dart';           // 2. Import your CartProvider
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'cart_provider.dart';
 
 class PetDetailsScreen extends StatelessWidget {
+  final int petId; // ✅ 1. ADDED: The pet's integer ID
   final String name;
   final String price;
   final String location;
@@ -10,6 +12,7 @@ class PetDetailsScreen extends StatelessWidget {
 
   const PetDetailsScreen({
     super.key,
+    required this.petId, // ✅ 2. ADDED: Required in the constructor
     required this.name,
     required this.price,
     required this.location,
@@ -48,10 +51,9 @@ class PetDetailsScreen extends StatelessWidget {
                       onPressed: () => Navigator.pop(context),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
+                    Text(
                       'Details',
-                      style: TextStyle(
-                        fontFamily: 'Work Sans',
+                      style: GoogleFonts.workSans(
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
                       ),
@@ -77,9 +79,16 @@ class PetDetailsScreen extends StatelessWidget {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
-                  child: Image.asset(
+                  child: Image.network( // Using Image.network for Supabase URLs
                     imagePath,
                     fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const Center(child: CircularProgressIndicator());
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Center(child: Icon(Icons.error, color: Colors.red, size: 50));
+                    },
                   ),
                 ),
               ),
@@ -106,8 +115,7 @@ class PetDetailsScreen extends StatelessWidget {
                             children: [
                               Text(
                                 name,
-                                style: const TextStyle(
-                                  fontFamily: 'Work Sans',
+                                style: GoogleFonts.workSans(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -115,8 +123,7 @@ class PetDetailsScreen extends StatelessWidget {
                               const SizedBox(height: 8),
                               Text(
                                 location,
-                                style: TextStyle(
-                                  fontFamily: 'Work Sans',
+                                style: GoogleFonts.workSans(
                                   fontSize: 16,
                                   color: Colors.grey[600],
                                 ),
@@ -125,20 +132,18 @@ class PetDetailsScreen extends StatelessWidget {
                           ),
                           Text(
                             price,
-                            style: const TextStyle(
-                              fontFamily: 'Work Sans',
+                            style: GoogleFonts.workSans(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF2ECC71),
+                              color: const Color(0xFF2ECC71),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 24),
-                      const Text(
+                      Text(
                         'Description',
-                        style: TextStyle(
-                          fontFamily: 'Work Sans',
+                        style: GoogleFonts.workSans(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
                         ),
@@ -146,18 +151,16 @@ class PetDetailsScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         'Lovely and friendly pet looking for a new home. Well-trained and great with people.',
-                        style: TextStyle(
-                          fontFamily: 'Work Sans',
+                        style: GoogleFonts.workSans(
                           fontSize: 16,
                           color: Colors.grey[600],
                           height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 24),
-                      const Text(
+                      Text(
                         'Seller Information',
-                        style: TextStyle(
-                          fontFamily: 'Work Sans',
+                        style: GoogleFonts.workSans(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
                         ),
@@ -173,17 +176,15 @@ class PetDetailsScreen extends StatelessWidget {
                             color: Colors.grey,
                           ),
                         ),
-                        title: const Text(
+                        title: Text(
                           'Sarah M.',
-                          style: TextStyle(
-                            fontFamily: 'Work Sans',
+                          style: GoogleFonts.workSans(
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        subtitle: const Text(
+                        subtitle: Text(
                           'Member since 2022',
-                          style: TextStyle(
-                            fontFamily: 'Work Sans',
+                          style: GoogleFonts.workSans(
                             color: Colors.grey,
                           ),
                         ),
@@ -196,15 +197,14 @@ class PetDetailsScreen extends StatelessWidget {
                         height: 56,
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            // 3. This line finds the CartProvider and calls the addItem method
+                            // ✅ 3. FIX: Pass the integer 'petId' to the addItem function
                             Provider.of<CartProvider>(context, listen: false).addItem(
-                              name, // Using pet's name as a unique ID
+                              petId,
                               name,
                               price,
                               imagePath,
                             );
 
-                            // The SnackBar still provides user feedback
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('$name added to your cart!'),
@@ -213,10 +213,9 @@ class PetDetailsScreen extends StatelessWidget {
                             );
                           },
                           icon: const Icon(Icons.shopping_cart_outlined),
-                          label: const Text(
+                          label: Text(
                             'Add to Cart',
-                            style: TextStyle(
-                              fontFamily: 'Work Sans',
+                            style: GoogleFonts.workSans(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),

@@ -129,9 +129,9 @@
     },
     {
       "name": "flutter_lints",
-      "rootUri": "file:///home/mahee/.pub-cache/hosted/pub.dev/flutter_lints-5.0.0",
+      "rootUri": "file:///home/mahee/.pub-cache/hosted/pub.dev/flutter_lints-4.0.0",
       "packageUri": "lib/",
-      "languageVersion": "3.5"
+      "languageVersion": "3.1"
     },
     {
       "name": "flutter_plugin_android_lifecycle",
@@ -236,6 +236,12 @@
       "languageVersion": "3.6"
     },
     {
+      "name": "intl",
+      "rootUri": "file:///home/mahee/.pub-cache/hosted/pub.dev/intl-0.19.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
       "name": "jwt_decode",
       "rootUri": "file:///home/mahee/.pub-cache/hosted/pub.dev/jwt_decode-0.3.1",
       "packageUri": "lib/",
@@ -261,9 +267,9 @@
     },
     {
       "name": "lints",
-      "rootUri": "file:///home/mahee/.pub-cache/hosted/pub.dev/lints-5.1.1",
+      "rootUri": "file:///home/mahee/.pub-cache/hosted/pub.dev/lints-4.0.0",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "3.1"
     },
     {
       "name": "logging",
@@ -587,7 +593,7 @@
       "name": "pet",
       "rootUri": "../",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.4"
     }
   ],
   "generator": "pub",

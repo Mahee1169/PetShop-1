@@ -1,6 +1,13 @@
+// Remove dart:io completely from imports for web compatibility
+// import 'dart:io'; // REMOVE THIS LINE
+import 'dart:typed_data'; // We'll use Uint8List for web image data
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:path/path.dart' as p;
 
 class PostPetScreen extends StatefulWidget {
   const PostPetScreen({super.key});
@@ -16,6 +23,12 @@ class _PostPetScreenState extends State<PostPetScreen> {
   final _locationController = TextEditingController();
   final _descriptionController = TextEditingController();
   String _selectedCategory = 'Dogs';
+  bool _isLoading = false;
+
+  // ✅ FIX: Use XFile to store the picked file reference for both platforms
+  XFile? _selectedXFile;
+  // ✅ FIX: Use Uint8List to store the actual image bytes for display on web
+  Uint8List? _imageBytesForWebDisplay;
 
   @override
   void dispose() {
@@ -27,6 +40,86 @@ class _PostPetScreenState extends State<PostPetScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
+
+    if (pickedFile != null) {
+      setState(() {
+        _selectedXFile = pickedFile;
+        if (kIsWeb) {
+          // If on web, load bytes directly for preview
+          pickedFile.readAsBytes().then((bytes) {
+            setState(() {
+              _imageBytesForWebDisplay = bytes;
+            });
+          });
+        }
+      });
+    }
+  }
+
+  Future<void> _postPet() async {
+    if (_selectedXFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload an image for your pet!'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+    // ... other validation ...
+    setState(() { _isLoading = true; });
+
+    final petName = _petNameController.text.trim();
+    final priceText = _priceController.text.trim();
+    final location = _locationController.text.trim();
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+
+    try {
+      final fileExtension = p.extension(_selectedXFile!.name);
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}$fileExtension';
+      
+      // ✅ FIX: Always read bytes for upload, works for both mobile and web
+      final Uint8List imageBytes = await _selectedXFile!.readAsBytes();
+
+      await Supabase.instance.client.storage
+          .from('pet_images')
+          .uploadBinary(
+            fileName,
+            imageBytes,
+            fileOptions: FileOptions(contentType: _selectedXFile!.mimeType),
+          );
+
+      final imageUrl = Supabase.instance.client.storage
+          .from('pet_images')
+          .getPublicUrl(fileName);
+
+      await Supabase.instance.client.from('pets').insert({
+        'name': petName,
+        'price': double.tryParse(priceText) ?? 0,
+        'location': location,
+        'imagePath': imageUrl,
+        'category': _selectedCategory,
+        'user_id': userId,
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pet posted successfully!'), backgroundColor: Colors.green),
+      );
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error posting pet: ${error.toString()}'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if(mounted) {
+        setState(() { _isLoading = false; });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,17 +127,14 @@ class _PostPetScreenState extends State<PostPetScreen> {
         title: const Text('Post Your Pet'),
         backgroundColor: const Color(0xFFD1E8D6),
         elevation: 0,
-        automaticallyImplyLeading: false, // Prevents default back button
+        automaticallyImplyLeading: false,
       ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFD1E8D6),
-              Color(0xFFE4E6F1),
-            ],
+            colors: [ Color(0xFFD1E8D6), Color(0xFFE4E6F1) ],
           ),
         ),
         child: SingleChildScrollView(
@@ -52,35 +142,31 @@ class _PostPetScreenState extends State<PostPetScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Image Upload Section
-              Container(
-                height: 200,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Upload the image of your pet',
-                      style: GoogleFonts.publicSans(color: Colors.black54, fontSize: 16),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        // TODO: Implement image upload functionality
-                      },
-                      icon: const Icon(Icons.upload_file),
-                      label: Text('Upload', style: GoogleFonts.publicSans(fontWeight: FontWeight.w600)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF5841),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                    ),
-                  ],
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade400, width: 2)
+                  ),
+                  // ✅ FIX: Corrected image preview logic for both web and mobile
+                  child: _selectedXFile != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: kIsWeb && _imageBytesForWebDisplay != null
+                              ? Image.memory(_imageBytesForWebDisplay!, fit: BoxFit.cover, width: double.infinity)
+                              : Image.network(_selectedXFile!.path, fit: BoxFit.cover, width: double.infinity), // For mobile and if web bytes aren't ready
+                        )
+                      : const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.camera_alt, size: 50, color: Colors.grey),
+                            SizedBox(height: 8),
+                            Text('Tap to upload an image'),
+                          ],
+                        ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -97,24 +183,25 @@ class _PostPetScreenState extends State<PostPetScreen> {
               _buildTextField(_descriptionController, 'Description (optional)', maxLines: 4),
               const SizedBox(height: 24),
               
-              // Post Button with Corrected Navigation
-              ElevatedButton(
-                onPressed: _postPet, // Call the post pet function
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4CAF50),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                ),
-                child: Text('Post', style: GoogleFonts.publicSans(fontSize: 18, fontWeight: FontWeight.w600)),
-              ),
+              _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ElevatedButton(
+                    onPressed: _postPet,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4CAF50),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    ),
+                    child: Text('Post', style: GoogleFonts.publicSans(fontSize: 18, fontWeight: FontWeight.w600)),
+                  ),
               const SizedBox(height: 24),
             ],
           ),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 2,
+         currentIndex: 2,
         selectedItemColor: const Color(0xFFFF9E6B),
         unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
@@ -127,7 +214,6 @@ class _PostPetScreenState extends State<PostPetScreen> {
               Navigator.pushReplacementNamed(context, '/browse');
               break;
             case 2:
-              // Already on Sell, do nothing
               break;
             case 3:
               Navigator.pushReplacementNamed(context, '/profile');
@@ -144,102 +230,6 @@ class _PostPetScreenState extends State<PostPetScreen> {
     );
   }
 
-  // Logic to post a pet, separated for cleanliness
-  Future<void> _postPet() async {
-    final petName = _petNameController.text.trim();
-    final priceText = _priceController.text.trim();
-    final location = _locationController.text.trim();
-
-    // Basic validation
-    if (petName.isEmpty || priceText.isEmpty || location.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all required fields!'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-
-    final price = double.tryParse(priceText);
-    if (price == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid number for the price!'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-
-    try {
-      // Call Supabase to insert the new pet
-      await Supabase.instance.client.from('pets').insert({
-        'name': petName,
-        'price': price,
-        'location': location,
-        'imagePath': 'assets/images/Golden Retriever.png', // Placeholder image for now
-        'category': _selectedCategory,
-      });
-
-      // THE FIX: Check if the screen is still mounted before showing UI
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pet posted successfully!'), backgroundColor: Colors.green),
-      );
-
-      // ✅ CORRECT NAVIGATION: Go to home and clear history
-      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error posting pet: ${error.toString()}'), backgroundColor: Colors.red),
-      );
-    }
-  }
-
-  // Helper widget for TextFields
-  Widget _buildTextField(TextEditingController controller, String hintText, {int maxLines = 1, TextInputType? keyboardType}) {
-    return TextField(
-      controller: controller,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.white.withOpacity(0.8),
-        hintText: hintText,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        hintStyle: GoogleFonts.publicSans(color: Colors.black54),
-      ),
-    );
-  }
-
-  // Helper widget for the Category dropdown
-  Widget _buildCategoryDropdown() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.8),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _selectedCategory,
-          isExpanded: true,
-          dropdownColor: Colors.white,
-          items: <String>['Dogs', 'Cats', 'Birds', 'Reptiles', 'Small Pets']
-              .map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(value),
-            );
-          }).toList(),
-          onChanged: (String? newValue) {
-            setState(() {
-              _selectedCategory = newValue!;
-            });
-          },
-        ),
-      ),
-    );
-  }
+  Widget _buildTextField(TextEditingController controller, String hintText, {int maxLines = 1, TextInputType? keyboardType}) { return TextField( controller: controller, maxLines: maxLines, keyboardType: keyboardType, decoration: InputDecoration( filled: true, fillColor: Colors.white.withOpacity(0.8), hintText: hintText, border: OutlineInputBorder( borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none, ), hintStyle: GoogleFonts.publicSans(color: Colors.black54), ), ); }
+  Widget _buildCategoryDropdown() { return Container( padding: const EdgeInsets.symmetric(horizontal: 12), decoration: BoxDecoration( color: Colors.white.withOpacity(0.8), borderRadius: BorderRadius.circular(12), ), child: DropdownButtonHideUnderline( child: DropdownButton<String>( value: _selectedCategory, isExpanded: true, dropdownColor: Colors.white, items: <String>['Dogs', 'Cats', 'Birds', 'Reptiles', 'Small Pets'] .map<DropdownMenuItem<String>>((String value) { return DropdownMenuItem<String>( value: value, child: Text(value), ); }).toList(), onChanged: (String? newValue) { setState(() { _selectedCategory = newValue!; }); }, ), ), ); }
 }

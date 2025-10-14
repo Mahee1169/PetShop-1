@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'cart_provider.dart'; // Make sure to import your cart provider
+import 'cart_provider.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -10,16 +11,13 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  // Controllers for the required text fields
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
-
-  // Selected dropdown value for District
-  String _selectedDistrict = 'Sylhet'; // Default value
+  String _selectedDistrict = 'Sylhet';
 
   @override
   void dispose() {
@@ -34,10 +32,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Access the cart from the provider to display items and total
     final cart = Provider.of<CartProvider>(context);
     
-    // Calculate total price from the cart
     double total = 0.0;
     for (var item in cart.items.values) {
       String rawPrice = item.price.replaceAll('\$', '').replaceAll(',', '');
@@ -46,19 +42,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Checkout'),
-        backgroundColor: const Color(0xFFD1E8D6), // Matching theme color
+        title: Text('Checkout', style: GoogleFonts.workSans()),
+        backgroundColor: const Color(0xFFD1E8D6),
         elevation: 0,
       ),
       body: Container(
-        // Using the same gradient as your other screens for consistency
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFD1E8D6), // Light mint green
-              Color(0xFFE4E6F1), // Light blue-grey
+              Color(0xFFD1E8D6),
+              Color(0xFFE4E6F1),
             ],
           ),
         ),
@@ -67,39 +62,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Section for Customer Details
-              const Text(
-                'Customer Details',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+              const Text('Customer Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               _buildTextField(_firstNameController, 'First Name'),
               _buildTextField(_lastNameController, 'Last Name'),
               _buildTextField(_addressController, 'Home Address'),
               _buildTextField(_cityController, 'Town / City'),
-              _buildDistrictDropdown(), // Dropdown for district selection
+              _buildDistrictDropdown(),
               _buildTextField(_emailController, 'Email Address'),
               const SizedBox(height: 24),
 
-              // Section for Additional Information
-              const Text(
-                'Additional Information',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+              const Text('Additional Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               _buildTextField(_notesController, 'Order notes (optional)', maxLines: 3),
               const SizedBox(height: 24),
 
-              // Section for Order Summary
-              const Text(
-                'Your Order',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+              const Text('Your Order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
-              _buildOrderSummary(cart, total), // Widget to show items and total
+              _buildOrderSummary(cart, total),
               const SizedBox(height: 32),
 
-              // Final Place Order Button
               _buildPlaceOrderButton(),
             ],
           ),
@@ -108,7 +90,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // Helper widget for creating styled text fields
   Widget _buildTextField(TextEditingController controller, String label, {int maxLines = 1}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -128,7 +109,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // Helper widget for the District dropdown menu
   Widget _buildDistrictDropdown() {
     return Container(
       margin: const EdgeInsets.only(bottom: 16.0),
@@ -158,7 +138,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // Helper widget to build the order summary section
   Widget _buildOrderSummary(CartProvider cart, double total) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -168,52 +147,41 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ),
       child: Column(
         children: [
-          // Display each item from the cart with a small picture
           ...cart.items.values.map((item) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 12.0),
               child: Row(
                 children: [
-                  // Small Pet Picture
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(
+                    child: Image.network(
                       item.imagePath,
                       width: 50,
                       height: 50,
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.pets, size: 40),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Pet Name
                   Expanded(
                     child: Text(
                       item.name,
                       style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
                   ),
-                  // Pet Price
                   Text(item.price),
                 ],
               ),
             );
           }).toList(),
           const Divider(height: 24),
-          // Display the total amount
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Total Amount:',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+              const Text('Total Amount:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               Text(
                 '\$${total.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2ECC71),
-                ),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2ECC71)),
               ),
             ],
           ),
@@ -222,27 +190,45 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // Helper widget for the final "Place Order" button
+  // ✅ THIS IS THE UPDATED WIDGET
   Widget _buildPlaceOrderButton() {
     return SizedBox(
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        // ✅ THIS IS THE UPDATED PART
         onPressed: () {
-          // Navigate to the payment screen
-          Navigator.pushNamed(context, '/payment');
+          // Basic validation for required fields
+          if (_firstNameController.text.isEmpty || _lastNameController.text.isEmpty || _addressController.text.isEmpty || _cityController.text.isEmpty || _emailController.text.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Please fill in all customer details.'), backgroundColor: Colors.red),
+            );
+            return; // Stop if validation fails
+          }
+
+          // 1. GATHER ALL DATA INTO A MAP
+          final checkoutData = {
+            'first_name': _firstNameController.text.trim(),
+            'last_name': _lastNameController.text.trim(),
+            'address': _addressController.text.trim(),
+            'city': _cityController.text.trim(),
+            'district': _selectedDistrict,
+            'email': _emailController.text.trim(),
+            'notes': _notesController.text.trim(),
+          };
+          
+          // 2. NAVIGATE TO PAYMENT SCREEN AND PASS THE DATA
+          Navigator.pushNamed(context, '/payment', arguments: checkoutData);
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFFF9E6B), // Matching theme button color
+          backgroundColor: const Color(0xFFFF9E6B),
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
           ),
         ),
-        child: const Text(
+        child: Text(
           'Place Order',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: GoogleFonts.workSans(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
     );

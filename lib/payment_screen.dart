@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'cart_provider.dart';
 
 class PaymentScreen extends StatefulWidget {
@@ -15,6 +17,66 @@ enum PaymentMethod { bkash, nagad, cashOnDelivery }
 class _PaymentScreenState extends State<PaymentScreen> {
   PaymentMethod? _selectedPaymentMethod = PaymentMethod.cashOnDelivery;
   final TextEditingController _referenceController = TextEditingController();
+  bool _isLoading = false;
+
+  // ✅ THIS IS THE NEW FUNCTION TO SAVE THE ORDER
+  Future<void> _confirmOrder() async {
+    setState(() { _isLoading = true; });
+
+    final checkoutData = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final cart = Provider.of<CartProvider>(context, listen: false);
+    final userId = Supabase.instance.client.auth.currentUser!.id;
+    
+    double total = 0.0;
+    for (var item in cart.items.values) {
+      String rawPrice = item.price.replaceAll('\$', '').replaceAll(',', '');
+      total += double.tryParse(rawPrice) ?? 0.0;
+    }
+
+    try {
+      final orderData = await Supabase.instance.client.from('orders').insert({
+        'user_id': userId,
+        'total_price': total,
+        'status': 'Processing',
+        'first_name': checkoutData['first_name'],
+        'last_name': checkoutData['last_name'],
+        'address': checkoutData['address'],
+        'city': checkoutData['city'],
+        'district': checkoutData['district'],
+        'email': checkoutData['email'],
+        'notes': checkoutData['notes'],
+      }).select().single();
+
+      final orderId = orderData['id'];
+
+      for (final item in cart.items.values) {
+        // Use the correct integer petId from the CartItem
+        await Supabase.instance.client.from('order_items').insert({
+          'order_id': orderId,
+          'pet_id': item.petId,
+        });
+      }
+      
+      cart.clearCart();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Order placed successfully!'), backgroundColor: Colors.green),
+        );
+        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to place order: ${error.toString()}'), backgroundColor: Colors.red),
+        );
+      }
+    }
+
+    if (mounted) {
+      setState(() { _isLoading = false; });
+    }
+  }
 
   @override
   void dispose() {
@@ -36,12 +98,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Confirm Your Order'),
+        title: Text('Confirm Your Order', style: GoogleFonts.workSans()),
         backgroundColor: const Color(0xFFD1E8D6),
         elevation: 0,
       ),
       body: Container(
-        // The background gradient now covers the whole screen
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
@@ -56,7 +117,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Total Amount Display
               Container(
                 padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
@@ -76,7 +136,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Digital Payment Section
               const Text('Digital Payment', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               _buildPaymentOption(
@@ -108,7 +167,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ),
               const SizedBox(height: 24),
 
-              // Direct Payment Section
               const Text('Direct Payment', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               _buildPaymentOption(
@@ -117,25 +175,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ),
               const SizedBox(height: 40),
 
-              // Confirm Order Button
-              ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Your order has been confirmed!'),
-                      backgroundColor: Colors.green,
+              // ✅ BUTTON NOW CALLS THE NEW FUNCTION
+              _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ElevatedButton(
+                    onPressed: _confirmOrder,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF9E6B),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF9E6B),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                  textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                child: const Text('Confirm Order'),
-              ),
+                    child: const Text('Confirm Order'),
+                  ),
             ],
           ),
         ),
@@ -143,7 +196,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  // ✅ THIS IS THE FULLY REBUILT WIDGET FOR THE PAYMENT OPTIONS
   Widget _buildPaymentOption({
     required String title,
     String? logoPath,
@@ -189,12 +241,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(title, style: GoogleFonts.workSans(fontWeight: FontWeight.bold, fontSize: 16)),
                   if (value != PaymentMethod.cashOnDelivery) ...[
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Text('Number: $paymentNumber', style: TextStyle(color: Colors.grey[700], fontSize: 12)),
+                        Text('Number: $paymentNumber', style: GoogleFonts.workSans(color: Colors.grey[700], fontSize: 12)),
                         const SizedBox(width: 8),
                         GestureDetector(
                           onTap: () {

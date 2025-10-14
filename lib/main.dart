@@ -1,13 +1,18 @@
-import 'dart:async'; // Import for StreamSubscription
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'cart_provider.dart';
+import 'profile_provider.dart';
 import 'cart_screen.dart';
 import 'checkout_screen.dart';
 import 'payment_screen.dart';
 import 'otp_screen.dart';
+import 'my_pets_screen.dart';
+import 'my_orders_screen.dart';
+import 'admin_approval_screen.dart';
+import 'admin_orders_screen.dart'; // ✅ Import added
 
 // Your other screen imports
 import 'find_your_pet_screen.dart';
@@ -43,7 +48,6 @@ void main() async {
   runApp(const MyApp());
 }
 
-// ✅ Changed to a StatefulWidget to listen for auth changes
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
@@ -52,7 +56,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  // A key to control navigation from outside the widget tree
   final _navigatorKey = GlobalKey<NavigatorState>();
   late final StreamSubscription<AuthState> _authStateSubscription;
 
@@ -64,17 +67,14 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void dispose() {
-    _authStateSubscription.cancel(); // Clean up the listener
+    _authStateSubscription.cancel();
     super.dispose();
   }
 
   void _setupAuthListener() {
-    // This listens for when a user clicks the password reset link
     _authStateSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       final event = data.event;
       if (event == AuthChangeEvent.passwordRecovery) {
-        // When the link is clicked, this event fires.
-        // We use the navigatorKey to safely navigate to the new password screen.
         _navigatorKey.currentState?.pushNamed('/newpassword');
       }
     });
@@ -82,10 +82,13 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => CartProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => CartProvider()),
+        ChangeNotifierProvider(create: (context) => ProfileProvider()),
+      ],
       child: MaterialApp(
-        navigatorKey: _navigatorKey, // ✅ Assign the navigator key
+        navigatorKey: _navigatorKey,
         debugShowCheckedModeBanner: false,
         title: 'Pet Market',
         theme: ThemeData(
@@ -110,9 +113,12 @@ class _MyAppState extends State<MyApp> {
           '/checkout': (context) => const CheckoutScreen(),
           '/payment': (context) => const PaymentScreen(),
           '/otp': (context) => const OtpScreen(),
+          '/my-pets': (context) => const MyPetsScreen(),
+          '/my-orders': (context) => const MyOrdersScreen(),
+          '/admin-approval': (context) => const AdminApprovalScreen(),
+          '/admin-orders': (context) => const AdminOrdersScreen(), // ✅ Route added
         },
       ),
     );
   }
 }
-
