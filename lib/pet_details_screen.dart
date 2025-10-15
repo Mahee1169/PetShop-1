@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'cart_provider.dart';
 
 class PetDetailsScreen extends StatefulWidget {
@@ -10,8 +11,7 @@ class PetDetailsScreen extends StatefulWidget {
   final String location;
   final String imagePath;
   final String description;
-  final String sellerName; // ✅ Added sellerName
-  final String userId; // Optional if needed for seller identification
+  final String userId; // ✅ Receives the user_id to find the seller
 
   const PetDetailsScreen({
     super.key,
@@ -21,7 +21,6 @@ class PetDetailsScreen extends StatefulWidget {
     required this.location,
     required this.imagePath,
     required this.description,
-    required this.sellerName, // ✅ Added sellerName
     required this.userId,
   });
 
@@ -30,6 +29,47 @@ class PetDetailsScreen extends StatefulWidget {
 }
 
 class _PetDetailsScreenState extends State<PetDetailsScreen> {
+  String _sellerName = 'Loading...'; // Default text while fetching
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSellerName(); // ✅ Call to fetch the seller's name
+  }
+
+  // ✅ This function now fetches the seller's name using the userId
+  Future<void> _fetchSellerName() async {
+    if (widget.userId.isEmpty) {
+      setState(() {
+        _sellerName = 'Unknown Seller';
+        _isLoading = false;
+      });
+      return;
+    }
+    try {
+      final data = await Supabase.instance.client
+          .from('profiles')
+          .select('full_name') // ✅ Correct use of select for a single query
+          .eq('id', widget.userId)
+          .single();
+      if (mounted) {
+        setState(() {
+          _sellerName = data['full_name'] ?? 'Unknown Seller';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _sellerName = 'Unknown Seller';
+          _isLoading = false;
+        });
+      }
+      print('Error fetching seller name: $e'); // Log the error for debugging
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,7 +90,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 🔙 Back Button + Title
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
@@ -70,8 +109,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                   ],
                 ),
               ),
-
-              // 🐶 Pet Image
               Container(
                 width: double.infinity,
                 height: 300,
@@ -86,156 +123,88 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                       return const Center(child: CircularProgressIndicator());
                     },
                     errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                        child: Icon(Icons.error, color: Colors.red, size: 50),
-                      );
+                      return const Center(child: Icon(Icons.error, color: Colors.red, size: 50));
                     },
                   ),
                 ),
               ),
-
-              // 🧾 Details Section
               Expanded(
                 child: Container(
                   margin: const EdgeInsets.only(top: 24),
                   padding: const EdgeInsets.all(24),
                   decoration: const BoxDecoration(
                     color: Colors.white,
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(30)),
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 🏷️ Name, Location & Price
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.name,
-                                style: GoogleFonts.workSans(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
+                  child: _isLoading // ✅ Show loading spinner while fetching seller name
+                      ? const Center(child: CircularProgressIndicator())
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(widget.name, style: GoogleFonts.workSans(fontSize: 24, fontWeight: FontWeight.bold)),
+                                    const SizedBox(height: 8),
+                                    Text(widget.location, style: GoogleFonts.workSans(fontSize: 16, color: Colors.grey[600])),
+                                  ],
+                                ),
+                                Text(widget.price, style: GoogleFonts.workSans(fontSize: 24, fontWeight: FontWeight.bold, color: const Color(0xFF2ECC71))),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            Text('Description', style: GoogleFonts.workSans(fontSize: 18, fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 8),
+                            Text(
+                              widget.description,
+                              style: GoogleFonts.workSans(fontSize: 16, color: Colors.grey[600], height: 1.5),
+                            ),
+                            const SizedBox(height: 24),
+                            Text('Seller Information', style: GoogleFonts.workSans(fontSize: 18, fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 16),
+                            ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: const CircleAvatar(radius: 24, backgroundColor: Colors.grey, child: Icon(Icons.person, color: Colors.white)),
+                              title: Text(
+                                _sellerName, // ✅ Display the fetched seller name
+                                style: GoogleFonts.workSans(fontWeight: FontWeight.w600),
+                              ),
+                              subtitle: Text('Verified Seller', style: GoogleFonts.workSans(color: Colors.grey)),
+                            ),
+                            const Spacer(),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Provider.of<CartProvider>(context, listen: false).addItem(
+                                    widget.petId,
+                                    widget.name,
+                                    widget.price,
+                                    widget.imagePath,
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('${widget.name} added to your cart!'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.shopping_cart_outlined),
+                                label: Text('Add to Cart', style: GoogleFonts.workSans(fontSize: 16, fontWeight: FontWeight.w600)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFFF9E6B),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  elevation: 0,
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                widget.location,
-                                style: GoogleFonts.workSans(
-                                  fontSize: 16,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                          Text(
-                            widget.price,
-                            style: GoogleFonts.workSans(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF2ECC71),
                             ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // 📝 Description
-                      Text(
-                        'Description',
-                        style: GoogleFonts.workSans(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        widget.description,
-                        style: GoogleFonts.workSans(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                          height: 1.5,
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // 🧑 Seller Info
-                      Text(
-                        'Seller Information',
-                        style: GoogleFonts.workSans(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const CircleAvatar(
-                          radius: 24,
-                          backgroundColor: Colors.grey,
-                          child: Icon(Icons.person, color: Colors.white),
-                        ),
-                        title: Text(
-                          widget.sellerName, // ✅ Using passed sellerName
-                          style: GoogleFonts.workSans(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        subtitle: Text(
-                          'Verified Seller',
-                          style: GoogleFonts.workSans(color: Colors.grey),
-                        ),
-                      ),
-
-                      const Spacer(),
-
-                      // 🛒 Add to Cart Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Provider.of<CartProvider>(context, listen: false)
-                                .addItem(
-                              widget.petId,
-                              widget.name,
-                              widget.price,
-                              widget.imagePath,
-                            );
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content:
-                                    Text('${widget.name} added to your cart!'),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.shopping_cart_outlined),
-                          label: Text(
-                            'Add to Cart',
-                            style: GoogleFonts.workSans(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFF9E6B),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 0,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ],

@@ -34,9 +34,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
     
+    // ✅ THIS IS THE UPDATED CALCULATION LOGIC
     double total = 0.0;
     for (var item in cart.items.values) {
-      String rawPrice = item.price.replaceAll('\$', '').replaceAll(',', '');
+      String rawPrice = item.price.replaceAll('৳', '').replaceAll(',', '');
       total += double.tryParse(rawPrice) ?? 0.0;
     }
 
@@ -180,9 +181,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             children: [
               const Text('Total Amount:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               Text(
-            '৳${total.toStringAsFixed(2)}',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2ECC71)),
-            ),
+                '৳${total.toStringAsFixed(2)}',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2ECC71)),
+              ),
             ],
           ),
         ],
@@ -190,22 +191,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // ✅ THIS IS THE UPDATED WIDGET
   Widget _buildPlaceOrderButton() {
     return SizedBox(
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
         onPressed: () {
-          // Basic validation for required fields
           if (_firstNameController.text.isEmpty || _lastNameController.text.isEmpty || _addressController.text.isEmpty || _cityController.text.isEmpty || _emailController.text.isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Please fill in all customer details.'), backgroundColor: Colors.red),
             );
-            return; // Stop if validation fails
+            return;
           }
 
-          // 1. GATHER ALL DATA INTO A MAP
           final checkoutData = {
             'first_name': _firstNameController.text.trim(),
             'last_name': _lastNameController.text.trim(),
@@ -216,7 +214,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             'notes': _notesController.text.trim(),
           };
           
-          // 2. NAVIGATE TO PAYMENT SCREEN AND PASS THE DATA
           Navigator.pushNamed(context, '/payment', arguments: checkoutData);
         },
         style: ElevatedButton.styleFrom(

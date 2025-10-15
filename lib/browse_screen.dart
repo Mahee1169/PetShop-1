@@ -16,32 +16,23 @@ class _BrowseScreenState extends State<BrowseScreen> {
   String _selectedCategory = 'Dogs';
   final _searchController = TextEditingController();
 
-  // ✅ Corrected Supabase stream query
-  // We use .select() before .asStream()
   final _petsStream = Supabase.instance.client
       .from('pets')
-      .select('*, profiles(full_name)') // include seller name
-      .order('created_at', ascending: false)
-      .asStream(); // convert the result into a stream
+      .stream(primaryKey: ['id'])
+      .order('created_at', ascending: false);
 
   Future<void> _deletePet(int petId) async {
     try {
       await Supabase.instance.client.from('pets').delete().eq('id', petId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Pet listing deleted successfully'),
-            backgroundColor: Colors.green,
-          ),
+          const SnackBar(content: Text('Pet listing deleted successfully'), backgroundColor: Colors.green),
         );
       }
     } catch (error) {
-      if (mounted) {
+       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to delete pet: ${error.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Failed to delete pet: ${error.toString()}'), backgroundColor: Colors.red),
         );
       }
     }
@@ -52,13 +43,9 @@ class _BrowseScreenState extends State<BrowseScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete This Listing?'),
-        content: const Text(
-            'Are you sure you want to permanently delete this pet listing? This action cannot be undone.'),
+        content: const Text('Are you sure you want to permanently delete this pet listing? This action cannot be undone.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
@@ -124,6 +111,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 ),
               ),
             ),
+            // ✅ CATEGORY PILLS ARE BACK
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -148,36 +136,25 @@ class _BrowseScreenState extends State<BrowseScreen> {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   }
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(
-                      child: Text('No pets found.',
-                          style: GoogleFonts.workSans()),
-                    );
+                    return Center(child: Text('No pets found.', style: GoogleFonts.workSans()));
                   }
 
                   final allPets = snapshot.data!;
                   final petsToShow = isAdmin
                       ? allPets
-                      : allPets
-                          .where((p) => p['status'] == 'approved')
-                          .toList();
+                      : allPets.where((p) => p['status'] == 'approved').toList();
 
                   final filteredPets = petsToShow
                       .where((pet) => pet['category'] == _selectedCategory)
                       .toList();
 
                   if (filteredPets.isEmpty) {
-                    return Center(
-                      child: Text(
-                        'No pets found in the $_selectedCategory category!',
-                        style: GoogleFonts.workSans(),
-                      ),
-                    );
+                    return Center(child: Text('No pets found in the $_selectedCategory category!', style: GoogleFonts.workSans()));
                   }
 
                   return GridView.builder(
                     padding: const EdgeInsets.all(16),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       mainAxisSpacing: 16,
                       crossAxisSpacing: 16,
@@ -195,6 +172,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
           ],
         ),
       ),
+      // ✅ BOTTOM NAVIGATION BAR IS BACK
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 1,
         selectedItemColor: const Color(0xFFFF9E6B),
@@ -216,13 +194,10 @@ class _BrowseScreenState extends State<BrowseScreen> {
           }
         },
         items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Browse'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.add_circle_outline), label: 'Sell'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline), label: 'Profile'),
+          BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'Sell'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
         ],
       ),
     );
@@ -267,10 +242,6 @@ class _BrowseScreenState extends State<BrowseScreen> {
     final formattedPrice = '৳${price.toStringAsFixed(0)}';
     final String description = pet['description'] ?? 'No description provided.';
     final String userId = pet['user_id'] ?? '';
-    final String sellerName = (pet['profiles'] != null &&
-            pet['profiles']['full_name'] != null)
-        ? pet['profiles']['full_name']
-        : 'Unknown Seller';
     final String status = pet['status'] ?? 'unknown';
 
     return GestureDetector(
@@ -285,7 +256,6 @@ class _BrowseScreenState extends State<BrowseScreen> {
               location: location,
               imagePath: imagePath,
               description: description,
-              sellerName: sellerName,
               userId: userId,
             ),
           ),
@@ -293,8 +263,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
       },
       child: Card(
         clipBehavior: Clip.antiAlias,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 3,
         child: Stack(
           children: [
@@ -311,8 +280,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                       return const Center(child: CircularProgressIndicator());
                     },
                     errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                          child: Icon(Icons.error, color: Colors.red));
+                      return const Center(child: Icon(Icons.error, color: Colors.red));
                     },
                   ),
                 ),
@@ -321,20 +289,11 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(name,
-                          style: GoogleFonts.workSans(
-                              fontWeight: FontWeight.bold, fontSize: 16),
-                          overflow: TextOverflow.ellipsis),
+                      Text(name, style: GoogleFonts.workSans(fontWeight: FontWeight.bold, fontSize: 16), overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 4),
-                      Text(formattedPrice,
-                          style: GoogleFonts.workSans(
-                              color: Colors.green[700],
-                              fontWeight: FontWeight.w600)),
+                      Text(formattedPrice, style: GoogleFonts.workSans(color: Colors.green[700], fontWeight: FontWeight.w600)),
                       const SizedBox(height: 4),
-                      Text(location,
-                          style: GoogleFonts.workSans(
-                              color: Colors.grey[600], fontSize: 12),
-                          overflow: TextOverflow.ellipsis),
+                      Text(location, style: GoogleFonts.workSans(color: Colors.grey[600], fontSize: 12), overflow: TextOverflow.ellipsis),
                     ],
                   ),
                 ),
@@ -349,8 +308,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   backgroundColor: Colors.white.withOpacity(0.85),
                   child: IconButton(
                     padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.delete_forever,
-                        color: Colors.redAccent, size: 22),
+                    icon: const Icon(Icons.delete_forever, color: Colors.redAccent, size: 22),
                     onPressed: () => _showDeleteConfirmation(petId),
                   ),
                 ),
@@ -360,18 +318,14 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 top: 8,
                 left: 8,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: status == 'pending' ? Colors.orange : Colors.red,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     status.toUpperCase(),
-                    style: GoogleFonts.workSans(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold),
+                    style: GoogleFonts.workSans(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),

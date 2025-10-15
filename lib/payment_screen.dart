@@ -19,7 +19,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
   final TextEditingController _referenceController = TextEditingController();
   bool _isLoading = false;
 
-  // ✅ THIS IS THE NEW FUNCTION TO SAVE THE ORDER
   Future<void> _confirmOrder() async {
     setState(() { _isLoading = true; });
 
@@ -29,7 +28,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     
     double total = 0.0;
     for (var item in cart.items.values) {
-      String rawPrice = item.price.replaceAll('\$', '').replaceAll(',', '');
+      String rawPrice = item.price.replaceAll('৳', '').replaceAll(',', '');
       total += double.tryParse(rawPrice) ?? 0.0;
     }
 
@@ -50,7 +49,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       final orderId = orderData['id'];
 
       for (final item in cart.items.values) {
-        // Use the correct integer petId from the CartItem
         await Supabase.instance.client.from('order_items').insert({
           'order_id': orderId,
           'pet_id': item.petId,
@@ -87,9 +85,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context, listen: false);
+    
+    // ✅ FIX: Corrected the total price calculation
     double total = 0.0;
     for (var item in cart.items.values) {
-      String rawPrice = item.price.replaceAll('\$', '').replaceAll(',', '');
+      // Look for the Taka sign '৳' instead of '$'
+      String rawPrice = item.price.replaceAll('৳', '').replaceAll(',', '');
       total += double.tryParse(rawPrice) ?? 0.0;
     }
 
@@ -127,8 +128,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text('Amount to Pay:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    // ✅ FIX: Display the total with the Taka sign
                     Text(
-                      '\$${total.toStringAsFixed(2)}',
+                      '৳${total.toStringAsFixed(2)}',
                       style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF2ECC71)),
                     ),
                   ],
@@ -175,7 +177,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ),
               const SizedBox(height: 40),
 
-              // ✅ BUTTON NOW CALLS THE NEW FUNCTION
               _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : ElevatedButton(

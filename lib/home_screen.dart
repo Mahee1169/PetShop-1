@@ -3,16 +3,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pet_details_screen.dart';
-import 'profile_provider.dart';
+import 'profile_provider.dart'; // Make sure this path is correct
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatefulWidget { // ✅ CORRECTED CLASS NAME
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState(); // ✅ CORRECTED STATE NAME
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> { // ✅ CORRECTED STATE NAME
   final _petsStream = Supabase.instance.client
       .from('pets')
       .stream(primaryKey: ['id'])
@@ -22,7 +22,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final profileProvider = Provider.of<ProfileProvider>(context);
-    final isAdmin = profileProvider.role == 'admin';
+    final userName = profileProvider.fullName; // For the personalized welcome message
+    final isAdmin = profileProvider.role == 'admin'; // For potential admin features
 
     return Scaffold(
       body: Container(
@@ -40,7 +41,20 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(),
-              const SizedBox(height: 30),
+              const SizedBox(height: 24),
+              // Personalized Welcome Message
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Text(
+                  'Hello, ${userName ?? 'Guest'}!',
+                  style: GoogleFonts.workSans(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF2D3436),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
               _buildMainTitle(),
               const SizedBox(height: 24),
               _buildSearchBar(),
@@ -86,7 +100,34 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
+        selectedItemColor: const Color(0xFFFF9E6B),
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              // Already on Home
+              break;
+            case 1:
+              Navigator.pushReplacementNamed(context, '/browse');
+              break;
+            case 2:
+              Navigator.pushReplacementNamed(context, '/post-pet');
+              break;
+            case 3:
+              Navigator.pushReplacementNamed(context, '/profile');
+              break;
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Browse'),
+          BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'Sell'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
+        ],
+      ),
     );
   }
 
@@ -97,9 +138,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final String imagePath = pet['imagePath'] ?? '';
     final price = pet['price'] ?? 0;
     final formattedPrice = '৳${price.toStringAsFixed(0)}';
-    final String description = pet['description'] ?? 'No description.';
+    final String description = pet['description'] ?? 'No description provided.';
     final String userId = pet['user_id'] ?? '';
-    final String sellerName = pet['seller_name'] ?? 'Unknown Seller';
 
     return GestureDetector(
       onTap: () {
@@ -114,7 +154,6 @@ class _HomeScreenState extends State<HomeScreen> {
               imagePath: imagePath,
               description: description,
               userId: userId,
-              sellerName: sellerName, // ✅ now required param included
             ),
           ),
         );
@@ -131,8 +170,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 imagePath,
                 fit: BoxFit.cover,
                 width: double.infinity,
-                errorBuilder: (context, error, stackTrace) =>
-                    const Center(child: Icon(Icons.error, color: Colors.red)),
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(child: CircularProgressIndicator());
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(child: Icon(Icons.broken_image, color: Colors.grey, size: 50));
+                },
               ),
             ),
             Padding(
@@ -140,20 +184,11 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16),
-                      overflow: TextOverflow.ellipsis),
+                  Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 4),
-                  Text(location,
-                      style: TextStyle(
-                          color: Colors.grey[600], fontSize: 12),
-                      overflow: TextOverflow.ellipsis),
+                  Text(location, style: TextStyle(color: Colors.grey[600], fontSize: 12), overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 4),
-                  Text(formattedPrice,
-                      style: TextStyle(
-                          color: Colors.green[700],
-                          fontWeight: FontWeight.w600)),
+                  Text(formattedPrice, style: TextStyle(color: Colors.green[700], fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
@@ -176,18 +211,13 @@ class _HomeScreenState extends State<HomeScreen> {
               gradient: LinearGradient(colors: [Color(0xFFFF6B9D), Color(0xFFFF8E53)]),
             ),
             child: Center(
-              child: Image.asset('assets/images/paw.png',
-                  width: 28, height: 28, color: Colors.white),
+              child: Image.asset('assets/images/paw.png', width: 28, height: 28, color: Colors.white),
             ),
           ),
           const SizedBox(width: 12),
           Text(
             'PetMarket',
-            style: GoogleFonts.workSans(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF2D3436),
-            ),
+            style: GoogleFonts.workSans(fontSize: 24, fontWeight: FontWeight.w800, color: const Color(0xFF2D3436)),
           ),
         ],
       ),
@@ -199,11 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Text(
         'Find Your Perfect Pet',
-        style: GoogleFonts.workSans(
-          fontSize: 32,
-          fontWeight: FontWeight.w900,
-          color: const Color(0xFF2D3436),
-        ),
+        style: GoogleFonts.workSans(fontSize: 32, fontWeight: FontWeight.w900, color: const Color(0xFF2D3436)),
       ),
     );
   }
@@ -215,13 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
         ),
         child: const TextField(
           decoration: InputDecoration(
@@ -232,36 +252,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildBottomNavBar() {
-    return BottomNavigationBar(
-      currentIndex: 0,
-      selectedItemColor: const Color(0xFFFF9E6B),
-      unselectedItemColor: Colors.grey,
-      type: BottomNavigationBarType.fixed,
-      onTap: (index) {
-        switch (index) {
-          case 0:
-            break;
-          case 1:
-            Navigator.pushReplacementNamed(context, '/browse');
-            break;
-          case 2:
-            Navigator.pushReplacementNamed(context, '/post-pet');
-            break;
-          case 3:
-            Navigator.pushReplacementNamed(context, '/profile');
-            break;
-        }
-      },
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Browse'),
-        BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'Sell'),
-        BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
-      ],
     );
   }
 }

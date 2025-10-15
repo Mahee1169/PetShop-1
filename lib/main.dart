@@ -8,7 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'cart_provider.dart';
 import 'profile_provider.dart';
 
-// Screens
+// Screens - Ensure these class names and file names match
 import 'cart_screen.dart';
 import 'checkout_screen.dart';
 import 'payment_screen.dart';
@@ -19,27 +19,17 @@ import 'admin_approval_screen.dart';
 import 'admin_orders_screen.dart';
 import 'find_your_pet_screen.dart';
 import 'password_reset_success_screen.dart';
-import 'home_screen.dart';
+import 'home_screen.dart'; // This file should contain `class HomeScreen`
 import 'login_screen.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
-import 'browse_screen.dart';
+import 'browse_screen.dart'; // This file should contain `class BrowseScreen`
 import 'post_pet_screen.dart';
 import 'profile_screen.dart';
 import 'edit_profile_screen.dart';
 import 'new_password_screen.dart';
 
-// ✅ Exports (optional, for easy access)
-export 'find_your_pet_screen.dart';
-export 'login_screen.dart';
-export 'signup_screen.dart';
-export 'forgot_password_screen.dart';
-export 'new_password_screen.dart';
-export 'password_reset_success_screen.dart';
-export 'browse_screen.dart';
-export 'post_pet_screen.dart';
-export 'profile_screen.dart';
-export 'edit_profile_screen.dart';
+// ✅ Removed unnecessary exports. Exports are usually for library packages.
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -101,7 +91,7 @@ class _MyAppState extends State<MyApp> {
         initialRoute: '/',
         routes: {
           '/': (context) => const FindYourPetScreen(),
-          '/home': (context) => const HomeScreen(), // ✅ HomeScreen fixed
+          '/home': (context) => const HomeScreen(),
           '/login': (context) => const LoginScreen(),
           '/signup': (context) => const SignUpScreen(),
           '/forgot-password': (context) => const ForgotPasswordScreen(),
