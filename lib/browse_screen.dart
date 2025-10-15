@@ -16,25 +16,32 @@ class _BrowseScreenState extends State<BrowseScreen> {
   String _selectedCategory = 'Dogs';
   final _searchController = TextEditingController();
 
-  // ✅ UPDATED: The stream now only fetches pets with status 'approved'
+  // ✅ Corrected Supabase stream query
+  // We use .select() before .asStream()
   final _petsStream = Supabase.instance.client
       .from('pets')
-      .stream(primaryKey: ['id'])
-      .eq('status', 'approved') // Only show approved pets
-      .order('created_at');
+      .select('*, profiles(full_name)') // include seller name
+      .order('created_at', ascending: false)
+      .asStream(); // convert the result into a stream
 
   Future<void> _deletePet(int petId) async {
     try {
       await Supabase.instance.client.from('pets').delete().eq('id', petId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pet listing deleted successfully'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Pet listing deleted successfully'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (error) {
-       if (mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete pet: ${error.toString()}'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Failed to delete pet: ${error.toString()}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -45,9 +52,13 @@ class _BrowseScreenState extends State<BrowseScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete This Listing?'),
-        content: const Text('Are you sure you want to permanently delete this pet listing? This action cannot be undone.'),
+        content: const Text(
+            'Are you sure you want to permanently delete this pet listing? This action cannot be undone.'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
@@ -67,9 +78,10 @@ class _BrowseScreenState extends State<BrowseScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Browse Pets'),
+        title: Text('Browse Pets', style: GoogleFonts.workSans()),
         backgroundColor: const Color(0xFFD1E8D6),
         elevation: 0,
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.shopping_cart_outlined),
@@ -80,43 +92,35 @@ class _BrowseScreenState extends State<BrowseScreen> {
           ),
         ],
       ),
-      body: DecoratedBox(
-        decoration: BoxDecoration(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: const [
+            colors: [
               Color(0xFFD1E8D6),
               Color(0xFFE4E6F1),
             ],
-            stops: const [0.4764, 0.8868],
-            transform: GradientRotation(171.18 * 3.1416 / 180),
           ),
         ),
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: const InputDecoration(
-                    icon: Icon(Icons.search, color: Colors.grey),
-                    hintText: 'Search for pets...',
-                    border: InputBorder.none,
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search for pets...',
+                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25),
+                    borderSide: BorderSide.none,
                   ),
+                  contentPadding: EdgeInsets.zero,
                 ),
               ),
             ),
@@ -144,19 +148,36 @@ class _BrowseScreenState extends State<BrowseScreen> {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   }
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No approved pets found.'));
+                    return Center(
+                      child: Text('No pets found.',
+                          style: GoogleFonts.workSans()),
+                    );
                   }
 
-                  final pets = snapshot.data!;
-                  final filteredPets = pets.where((pet) => pet['category'] == _selectedCategory).toList();
+                  final allPets = snapshot.data!;
+                  final petsToShow = isAdmin
+                      ? allPets
+                      : allPets
+                          .where((p) => p['status'] == 'approved')
+                          .toList();
+
+                  final filteredPets = petsToShow
+                      .where((pet) => pet['category'] == _selectedCategory)
+                      .toList();
 
                   if (filteredPets.isEmpty) {
-                    return Center(child: Text('No approved pets found in the $_selectedCategory category!'));
+                    return Center(
+                      child: Text(
+                        'No pets found in the $_selectedCategory category!',
+                        style: GoogleFonts.workSans(),
+                      ),
+                    );
                   }
 
                   return GridView.builder(
                     padding: const EdgeInsets.all(16),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       mainAxisSpacing: 16,
                       crossAxisSpacing: 16,
@@ -165,14 +186,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                     itemCount: filteredPets.length,
                     itemBuilder: (context, index) {
                       final pet = filteredPets[index];
-                      final price = pet['price'] ?? 0;
-                      final formattedPrice = '\$${price.toStringAsFixed(0)}';
-
-                      return _buildPetCard(
-                        pet,
-                        formattedPrice,
-                        isAdmin,
-                      );
+                      return _buildPetCard(pet, isAdmin);
                     },
                   );
                 },
@@ -202,10 +216,13 @@ class _BrowseScreenState extends State<BrowseScreen> {
           }
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Browse'),
-          BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'Sell'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.add_circle_outline), label: 'Sell'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline), label: 'Profile'),
         ],
       ),
     );
@@ -241,11 +258,20 @@ class _BrowseScreenState extends State<BrowseScreen> {
     );
   }
 
-  Widget _buildPetCard(Map<String, dynamic> pet, String formattedPrice, bool isAdmin) {
+  Widget _buildPetCard(Map<String, dynamic> pet, bool isAdmin) {
     final int petId = pet['id'];
     final String name = pet['name'] ?? 'No Name';
     final String location = pet['location'] ?? 'No Location';
     final String imagePath = pet['imagePath'] ?? '';
+    final price = pet['price'] ?? 0;
+    final formattedPrice = '৳${price.toStringAsFixed(0)}';
+    final String description = pet['description'] ?? 'No description provided.';
+    final String userId = pet['user_id'] ?? '';
+    final String sellerName = (pet['profiles'] != null &&
+            pet['profiles']['full_name'] != null)
+        ? pet['profiles']['full_name']
+        : 'Unknown Seller';
+    final String status = pet['status'] ?? 'unknown';
 
     return GestureDetector(
       onTap: () {
@@ -258,13 +284,17 @@ class _BrowseScreenState extends State<BrowseScreen> {
               price: formattedPrice,
               location: location,
               imagePath: imagePath,
+              description: description,
+              sellerName: sellerName,
+              userId: userId,
             ),
           ),
         );
       },
       child: Card(
         clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 3,
         child: Stack(
           children: [
@@ -281,7 +311,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
                       return const Center(child: CircularProgressIndicator());
                     },
                     errorBuilder: (context, error, stackTrace) {
-                      return const Center(child: Icon(Icons.error, color: Colors.red));
+                      return const Center(
+                          child: Icon(Icons.error, color: Colors.red));
                     },
                   ),
                 ),
@@ -290,11 +321,20 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), overflow: TextOverflow.ellipsis),
+                      Text(name,
+                          style: GoogleFonts.workSans(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                          overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 4),
-                      Text(formattedPrice, style: TextStyle(color: Colors.green[700], fontWeight: FontWeight.w600)),
+                      Text(formattedPrice,
+                          style: GoogleFonts.workSans(
+                              color: Colors.green[700],
+                              fontWeight: FontWeight.w600)),
                       const SizedBox(height: 4),
-                      Text(location, style: TextStyle(color: Colors.grey[600], fontSize: 12), overflow: TextOverflow.ellipsis),
+                      Text(location,
+                          style: GoogleFonts.workSans(
+                              color: Colors.grey[600], fontSize: 12),
+                          overflow: TextOverflow.ellipsis),
                     ],
                   ),
                 ),
@@ -309,10 +349,29 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   backgroundColor: Colors.white.withOpacity(0.85),
                   child: IconButton(
                     padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.delete_forever, color: Colors.redAccent, size: 22),
-                    onPressed: () {
-                      _showDeleteConfirmation(petId);
-                    },
+                    icon: const Icon(Icons.delete_forever,
+                        color: Colors.redAccent, size: 22),
+                    onPressed: () => _showDeleteConfirmation(petId),
+                  ),
+                ),
+              ),
+            if (isAdmin && status != 'approved')
+              Positioned(
+                top: 8,
+                left: 8,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: status == 'pending' ? Colors.orange : Colors.red,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    status.toUpperCase(),
+                    style: GoogleFonts.workSans(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold),
                   ),
                 ),
               ),

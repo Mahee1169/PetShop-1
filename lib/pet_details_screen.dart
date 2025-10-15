@@ -3,22 +3,33 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'cart_provider.dart';
 
-class PetDetailsScreen extends StatelessWidget {
-  final int petId; // ✅ 1. ADDED: The pet's integer ID
+class PetDetailsScreen extends StatefulWidget {
+  final int petId;
   final String name;
   final String price;
   final String location;
   final String imagePath;
+  final String description;
+  final String sellerName; // ✅ Added sellerName
+  final String userId; // Optional if needed for seller identification
 
   const PetDetailsScreen({
     super.key,
-    required this.petId, // ✅ 2. ADDED: Required in the constructor
+    required this.petId,
     required this.name,
     required this.price,
     required this.location,
     required this.imagePath,
+    required this.description,
+    required this.sellerName, // ✅ Added sellerName
+    required this.userId,
   });
 
+  @override
+  State<PetDetailsScreen> createState() => _PetDetailsScreenState();
+}
+
+class _PetDetailsScreenState extends State<PetDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,18 +41,16 @@ class PetDetailsScreen extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFD1E8D6), // Light mint green
-              Color(0xFFE4E6F1), // Light blue-grey
+              Color(0xFFD1E8D6),
+              Color(0xFFE4E6F1),
             ],
-            stops: [0.4764, 0.8868],
-            transform: GradientRotation(171.18 * 3.1416 / 180),
           ),
         ),
         child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Back Button and Details Text
+              // 🔙 Back Button + Title
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
@@ -62,51 +71,43 @@ class PetDetailsScreen extends StatelessWidget {
                 ),
               ),
 
-              // Pet Image
+              // 🐶 Pet Image
               Container(
                 width: double.infinity,
                 height: 300,
                 margin: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
-                  child: Image.network( // Using Image.network for Supabase URLs
-                    imagePath,
+                  child: Image.network(
+                    widget.imagePath,
                     fit: BoxFit.cover,
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
                       return const Center(child: CircularProgressIndicator());
                     },
                     errorBuilder: (context, error, stackTrace) {
-                      return const Center(child: Icon(Icons.error, color: Colors.red, size: 50));
+                      return const Center(
+                        child: Icon(Icons.error, color: Colors.red, size: 50),
+                      );
                     },
                   ),
                 ),
               ),
 
-              // Pet Information
+              // 🧾 Details Section
               Expanded(
                 child: Container(
                   margin: const EdgeInsets.only(top: 24),
                   padding: const EdgeInsets.all(24),
                   decoration: const BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(30),
-                    ),
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(30)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // 🏷️ Name, Location & Price
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -114,7 +115,7 @@ class PetDetailsScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                name,
+                                widget.name,
                                 style: GoogleFonts.workSans(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -122,7 +123,7 @@ class PetDetailsScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                location,
+                                widget.location,
                                 style: GoogleFonts.workSans(
                                   fontSize: 16,
                                   color: Colors.grey[600],
@@ -131,7 +132,7 @@ class PetDetailsScreen extends StatelessWidget {
                             ],
                           ),
                           Text(
-                            price,
+                            widget.price,
                             style: GoogleFonts.workSans(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -140,7 +141,10 @@ class PetDetailsScreen extends StatelessWidget {
                           ),
                         ],
                       ),
+
                       const SizedBox(height: 24),
+
+                      // 📝 Description
                       Text(
                         'Description',
                         style: GoogleFonts.workSans(
@@ -150,14 +154,17 @@ class PetDetailsScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Lovely and friendly pet looking for a new home. Well-trained and great with people.',
+                        widget.description,
                         style: GoogleFonts.workSans(
                           fontSize: 16,
                           color: Colors.grey[600],
                           height: 1.5,
                         ),
                       ),
+
                       const SizedBox(height: 24),
+
+                      // 🧑 Seller Info
                       Text(
                         'Seller Information',
                         style: GoogleFonts.workSans(
@@ -168,46 +175,43 @@ class PetDetailsScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       ListTile(
                         contentPadding: EdgeInsets.zero,
-                        leading: CircleAvatar(
+                        leading: const CircleAvatar(
                           radius: 24,
-                          backgroundColor: Colors.grey[200],
-                          child: const Icon(
-                            Icons.person,
-                            color: Colors.grey,
-                          ),
+                          backgroundColor: Colors.grey,
+                          child: Icon(Icons.person, color: Colors.white),
                         ),
                         title: Text(
-                          'Sarah M.',
+                          widget.sellerName, // ✅ Using passed sellerName
                           style: GoogleFonts.workSans(
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         subtitle: Text(
-                          'Member since 2022',
-                          style: GoogleFonts.workSans(
-                            color: Colors.grey,
-                          ),
+                          'Verified Seller',
+                          style: GoogleFonts.workSans(color: Colors.grey),
                         ),
                       ),
+
                       const Spacer(),
 
-                      // ADD TO CART BUTTON
+                      // 🛒 Add to Cart Button
                       SizedBox(
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            // ✅ 3. FIX: Pass the integer 'petId' to the addItem function
-                            Provider.of<CartProvider>(context, listen: false).addItem(
-                              petId,
-                              name,
-                              price,
-                              imagePath,
+                            Provider.of<CartProvider>(context, listen: false)
+                                .addItem(
+                              widget.petId,
+                              widget.name,
+                              widget.price,
+                              widget.imagePath,
                             );
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('$name added to your cart!'),
+                                content:
+                                    Text('${widget.name} added to your cart!'),
                                 backgroundColor: Colors.green,
                               ),
                             );

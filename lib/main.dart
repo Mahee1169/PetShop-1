@@ -3,8 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+// Providers
 import 'cart_provider.dart';
 import 'profile_provider.dart';
+
+// Screens
 import 'cart_screen.dart';
 import 'checkout_screen.dart';
 import 'payment_screen.dart';
@@ -12,9 +16,7 @@ import 'otp_screen.dart';
 import 'my_pets_screen.dart';
 import 'my_orders_screen.dart';
 import 'admin_approval_screen.dart';
-import 'admin_orders_screen.dart'; // ✅ Import added
-
-// Your other screen imports
+import 'admin_orders_screen.dart';
 import 'find_your_pet_screen.dart';
 import 'password_reset_success_screen.dart';
 import 'home_screen.dart';
@@ -27,7 +29,7 @@ import 'profile_screen.dart';
 import 'edit_profile_screen.dart';
 import 'new_password_screen.dart';
 
-// Your exports
+// ✅ Exports (optional, for easy access)
 export 'find_your_pet_screen.dart';
 export 'login_screen.dart';
 export 'signup_screen.dart';
@@ -99,7 +101,7 @@ class _MyAppState extends State<MyApp> {
         initialRoute: '/',
         routes: {
           '/': (context) => const FindYourPetScreen(),
-          '/home': (context) => const HomeScreen(),
+          '/home': (context) => const HomeScreen(), // ✅ HomeScreen fixed
           '/login': (context) => const LoginScreen(),
           '/signup': (context) => const SignUpScreen(),
           '/forgot-password': (context) => const ForgotPasswordScreen(),
@@ -116,7 +118,7 @@ class _MyAppState extends State<MyApp> {
           '/my-pets': (context) => const MyPetsScreen(),
           '/my-orders': (context) => const MyOrdersScreen(),
           '/admin-approval': (context) => const AdminApprovalScreen(),
-          '/admin-orders': (context) => const AdminOrdersScreen(), // ✅ Route added
+          '/admin-orders': (context) => const AdminOrdersScreen(),
         },
       ),
     );

@@ -1,7 +1,4 @@
-// Remove dart:io completely from imports for web compatibility
-// import 'dart:io'; // REMOVE THIS LINE
-import 'dart:typed_data'; // We'll use Uint8List for web image data
-
+import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,11 +21,7 @@ class _PostPetScreenState extends State<PostPetScreen> {
   final _descriptionController = TextEditingController();
   String _selectedCategory = 'Dogs';
   bool _isLoading = false;
-
-  // ✅ FIX: Use XFile to store the picked file reference for both platforms
-  XFile? _selectedXFile;
-  // ✅ FIX: Use Uint8List to store the actual image bytes for display on web
-  Uint8List? _imageBytesForWebDisplay;
+  XFile? _selectedImageFile;
 
   @override
   void dispose() {
@@ -43,30 +36,20 @@ class _PostPetScreenState extends State<PostPetScreen> {
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
-
     if (pickedFile != null) {
       setState(() {
-        _selectedXFile = pickedFile;
-        if (kIsWeb) {
-          // If on web, load bytes directly for preview
-          pickedFile.readAsBytes().then((bytes) {
-            setState(() {
-              _imageBytesForWebDisplay = bytes;
-            });
-          });
-        }
+        _selectedImageFile = pickedFile;
       });
     }
   }
 
   Future<void> _postPet() async {
-    if (_selectedXFile == null) {
+    if (_selectedImageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please upload an image for your pet!'), backgroundColor: Colors.red),
       );
       return;
     }
-    // ... other validation ...
     setState(() { _isLoading = true; });
 
     final petName = _petNameController.text.trim();
@@ -75,18 +58,16 @@ class _PostPetScreenState extends State<PostPetScreen> {
     final userId = Supabase.instance.client.auth.currentUser?.id;
 
     try {
-      final fileExtension = p.extension(_selectedXFile!.name);
+      final imageBytes = await _selectedImageFile!.readAsBytes();
+      final fileExtension = p.extension(_selectedImageFile!.name);
       final fileName = '${DateTime.now().millisecondsSinceEpoch}$fileExtension';
-      
-      // ✅ FIX: Always read bytes for upload, works for both mobile and web
-      final Uint8List imageBytes = await _selectedXFile!.readAsBytes();
 
       await Supabase.instance.client.storage
           .from('pet_images')
           .uploadBinary(
             fileName,
             imageBytes,
-            fileOptions: FileOptions(contentType: _selectedXFile!.mimeType),
+            fileOptions: FileOptions(contentType: _selectedImageFile!.mimeType),
           );
 
       final imageUrl = Supabase.instance.client.storage
@@ -100,11 +81,13 @@ class _PostPetScreenState extends State<PostPetScreen> {
         'imagePath': imageUrl,
         'category': _selectedCategory,
         'user_id': userId,
+        'description': _descriptionController.text.trim(),
+        'status': 'pending', // Default status for new posts
       });
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pet posted successfully!'), backgroundColor: Colors.green),
+        const SnackBar(content: Text('Pet posted successfully! Awaiting admin approval.'), backgroundColor: Colors.green),
       );
       Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
 
@@ -151,13 +134,12 @@ class _PostPetScreenState extends State<PostPetScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.grey.shade400, width: 2)
                   ),
-                  // ✅ FIX: Corrected image preview logic for both web and mobile
-                  child: _selectedXFile != null
+                  child: _selectedImageFile != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(10),
-                          child: kIsWeb && _imageBytesForWebDisplay != null
-                              ? Image.memory(_imageBytesForWebDisplay!, fit: BoxFit.cover, width: double.infinity)
-                              : Image.network(_selectedXFile!.path, fit: BoxFit.cover, width: double.infinity), // For mobile and if web bytes aren't ready
+                          child: kIsWeb
+                              ? Image.network(_selectedImageFile!.path, fit: BoxFit.cover, width: double.infinity)
+                              : Image.file(File(_selectedImageFile!.path), fit: BoxFit.cover, width: double.infinity),
                         )
                       : const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -220,6 +202,7 @@ class _PostPetScreenState extends State<PostPetScreen> {
               break;
           }
         },
+        // ✅ FIX 2: Added the required 'items' property
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Browse'),
@@ -230,6 +213,52 @@ class _PostPetScreenState extends State<PostPetScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hintText, {int maxLines = 1, TextInputType? keyboardType}) { return TextField( controller: controller, maxLines: maxLines, keyboardType: keyboardType, decoration: InputDecoration( filled: true, fillColor: Colors.white.withOpacity(0.8), hintText: hintText, border: OutlineInputBorder( borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none, ), hintStyle: GoogleFonts.publicSans(color: Colors.black54), ), ); }
-  Widget _buildCategoryDropdown() { return Container( padding: const EdgeInsets.symmetric(horizontal: 12), decoration: BoxDecoration( color: Colors.white.withOpacity(0.8), borderRadius: BorderRadius.circular(12), ), child: DropdownButtonHideUnderline( child: DropdownButton<String>( value: _selectedCategory, isExpanded: true, dropdownColor: Colors.white, items: <String>['Dogs', 'Cats', 'Birds', 'Reptiles', 'Small Pets'] .map<DropdownMenuItem<String>>((String value) { return DropdownMenuItem<String>( value: value, child: Text(value), ); }).toList(), onChanged: (String? newValue) { setState(() { _selectedCategory = newValue!; }); }, ), ), ); }
+  // ✅ FIX 1: Added the missing helper methods below
+
+  Widget _buildTextField(TextEditingController controller, String hintText, {int maxLines = 1, TextInputType? keyboardType}) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.8),
+        hintText: hintText,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        hintStyle: GoogleFonts.publicSans(color: Colors.black54),
+      ),
+    );
+  }
+
+  Widget _buildCategoryDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedCategory,
+          isExpanded: true,
+          dropdownColor: Colors.white,
+          items: <String>['Dogs', 'Cats', 'Birds', 'Reptiles', 'Small Pets']
+              .map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+          onChanged: (String? newValue) {
+            setState(() {
+              _selectedCategory = newValue!;
+            });
+          },
+        ),
+      ),
+    );
+  }
 }

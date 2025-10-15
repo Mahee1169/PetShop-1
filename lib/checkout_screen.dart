@@ -180,9 +180,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             children: [
               const Text('Total Amount:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               Text(
-                '\$${total.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2ECC71)),
-              ),
+            '৳${total.toStringAsFixed(2)}',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2ECC71)),
+            ),
             ],
           ),
         ],

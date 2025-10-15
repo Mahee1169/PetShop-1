@@ -70,7 +70,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                   child: ListTile(
                     title: Text('Order #${order['id']}', style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text('Placed on $formattedDate - Status: ${order['status']}'),
-                    trailing: Text('\$${order['total_price']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    trailing: Text('৳${order['total_price']}', style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 );
               },
