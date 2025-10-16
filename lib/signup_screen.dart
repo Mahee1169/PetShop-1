@@ -100,24 +100,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Center(
-                    // ✅ MODIFIED: Paw logo with circular gradient background
                     child: Container(
-                      width: 100, // Keep the same size as the image initially
+                      width: 100,
                       height: 100,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
-                          begin: Alignment.topLeft, // Adjust gradient direction if needed
+                          begin: Alignment.topLeft, 
                           end: Alignment.bottomRight,
-                          colors: [Color(0xFFFF6B9D), Color(0xFFFF8E53)], // Colors from the image
+                          colors: [Color(0xFFFF6B9D), Color(0xFFFF8E53)], 
                         ),
                       ),
                       child: Center(
                         child: Image.asset(
                           'assets/images/paw.png',
-                          width: 70, // Adjust paw icon size inside the circle
+                          width: 70,
                           height: 70,
-                          color: Colors.white, // Assuming the paw itself should be white
+                          color: Colors.white, 
                         ),
                       ),
                     ),

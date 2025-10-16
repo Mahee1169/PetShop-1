@@ -6,8 +6,8 @@ class ProfileProvider with ChangeNotifier {
   String? _role;
   String? get role => _role;
 
-  String? _fullName; // ✅ ADDED: To store the user's name
-  String? get fullName => _fullName; // ✅ ADDED: A getter for the name
+  String? _fullName; 
+  String? get fullName => _fullName;
 
   late final StreamSubscription<AuthState> _authSubscription;
 
@@ -33,19 +33,19 @@ class ProfileProvider with ChangeNotifier {
       try {
         final data = await Supabase.instance.client
             .from('profiles')
-            .select('role, full_name') // ✅ MODIFIED: Now fetches 'full_name'
+            .select('role, full_name') 
             .eq('id', user.id)
             .single();
         _role = data['role'];
-        _fullName = data['full_name']; // ✅ MODIFIED: Now stores 'full_name'
+        _fullName = data['full_name']; 
       } catch (e) {
         _role = 'user';
-        _fullName = 'User'; // Default name on error
-        print('Error loading profile: $e'); // Added for debugging
+        _fullName = 'User'; 
+        print('Error loading profile: $e'); 
       }
     } else {
       _role = null;
-      _fullName = null; // Clear name on logout
+      _fullName = null; 
     }
     notifyListeners();
   }

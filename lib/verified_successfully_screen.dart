@@ -25,8 +25,6 @@ class VerifiedSuccessfullyScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 100),
-              
-              // 🐾 Paw Logo with gradient
               Container(
                 width: 120,
                 height: 120,
@@ -51,10 +49,7 @@ class VerifiedSuccessfullyScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              
               const SizedBox(height: 60),
-              
-              // ✅ Success Icon
               Container(
                 width: 100,
                 height: 100,
@@ -84,8 +79,6 @@ class VerifiedSuccessfullyScreen extends StatelessWidget {
               ),
               
               const SizedBox(height: 30),
-              
-              // 📝 Verified Successfully Text
               const Text(
                 'Verified Successfully',
                 style: TextStyle(

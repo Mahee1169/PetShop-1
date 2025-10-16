@@ -38,11 +38,7 @@ class CartScreen extends StatelessWidget {
                             child: ListTile(
                               leading: CircleAvatar(
                                 backgroundImage: NetworkImage(cartItem.imagePath),
-                                // ✅ FIX: REMOVED THE 'child' PROPERTY HERE
-                                // This ensures the paw icon is not drawn over the image.
                                 onBackgroundImageError: (exception, stackTrace) {
-                                  // You can add a specific error widget here if you want
-                                  // e.g., print('Image failed to load: $exception');
                                 },
                               ),
                               title: Text(cartItem.name, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -68,12 +64,9 @@ class CartScreen extends StatelessWidget {
       ),
     );
   }
-
-  // This widget now correctly calculates the total price
   Widget _buildTotalAndCheckout(BuildContext context, CartProvider cart) {
     double total = 0.0;
     for (var item in cart.items.values) {
-      // FIX: Changed the '$' to '৳' to correctly parse the price
       String rawPrice = item.price.replaceAll('৳', '').replaceAll(',', '');
       total += double.tryParse(rawPrice) ?? 0.0;
     }
@@ -102,7 +95,7 @@ class CartScreen extends StatelessWidget {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               Text(
-                '৳${total.toStringAsFixed(2)}', // Display with Taka sign
+                '৳${total.toStringAsFixed(2)}', 
                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF2ECC71)),
               ),
             ],

@@ -1,42 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 class MyPetsScreen extends StatefulWidget {
   const MyPetsScreen({super.key});
-
   @override
   State<MyPetsScreen> createState() => _MyPetsScreenState();
 }
-
 class _MyPetsScreenState extends State<MyPetsScreen> {
-  // A Future to hold the result of our database query
   late final Future<List<Map<String, dynamic>>> _myPetsFuture;
-
   @override
   void initState() {
     super.initState();
-    // Start fetching the pets as soon as the screen loads
     _myPetsFuture = _fetchMyPets();
   }
-
-  // Fetches pets posted ONLY by the current user from Supabase
   Future<List<Map<String, dynamic>>> _fetchMyPets() async {
     try {
       final userId = Supabase.instance.client.auth.currentUser!.id;
       final data = await Supabase.instance.client
           .from('pets')
           .select()
-          .eq('user_id', userId) // The important filter!
+          .eq('user_id', userId) 
           .order('created_at', ascending: false);
       return data;
     } catch (error) {
-      // If there's an error, we throw it so the FutureBuilder can catch it
       throw Exception('Could not load your pets. Please try again.');
     }
   }
 
-  // Deletes a pet from the database and refreshes the screen
   Future<void> _deletePet(int petId) async {
     try {
       await Supabase.instance.client.from('pets').delete().eq('id', petId);
@@ -45,7 +35,6 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Pet listing deleted successfully'), backgroundColor: Colors.green),
         );
-        // Refresh the list by re-fetching the data
         setState(() {
           _myPetsFuture = _fetchMyPets();
         });
@@ -58,8 +47,6 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
       }
     }
   }
-
-  // Shows a confirmation dialog before deleting a pet
   void _showDeleteConfirmation(int petId) {
     showDialog(
       context: context,
@@ -74,8 +61,8 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
             ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Close the dialog first
-                _deletePet(petId);    // Then proceed with the deletion
+                Navigator.pop(context); 
+                _deletePet(petId);    
               },
               child: const Text('Delete', style: TextStyle(color: Colors.red)),
             ),
@@ -94,7 +81,6 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
         elevation: 0,
       ),
       body: Container(
-        // The background gradient is consistent with your other screens
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
@@ -104,19 +90,15 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
             colors: [Color(0xFFD1E8D6), Color(0xFFE4E6F1)],
           ),
         ),
-        // FutureBuilder waits for the data to load from Supabase
         child: FutureBuilder<List<Map<String, dynamic>>>(
           future: _myPetsFuture,
           builder: (context, snapshot) {
-            // While loading, show a spinner
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-            // If there's an error, show the error message
             if (snapshot.hasError) {
               return Center(child: Text(snapshot.error.toString()));
             }
-            // If the data is empty, show a helpful message
             final myPets = snapshot.data!;
             if (myPets.isEmpty) {
               return Center(
@@ -126,7 +108,6 @@ class _MyPetsScreenState extends State<MyPetsScreen> {
                 ),
               );
             }
-            // If data is loaded, build the list of pets
             return ListView.builder(
               itemCount: myPets.length,
               itemBuilder: (context, index) {

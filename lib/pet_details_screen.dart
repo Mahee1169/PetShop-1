@@ -11,7 +11,7 @@ class PetDetailsScreen extends StatefulWidget {
   final String location;
   final String imagePath;
   final String description;
-  final String userId; // ✅ Receives the user_id to find the seller
+  final String userId; 
 
   const PetDetailsScreen({
     super.key,
@@ -29,16 +29,14 @@ class PetDetailsScreen extends StatefulWidget {
 }
 
 class _PetDetailsScreenState extends State<PetDetailsScreen> {
-  String _sellerName = 'Loading...'; // Default text while fetching
+  String _sellerName = 'Loading...'; 
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchSellerName(); // ✅ Call to fetch the seller's name
+    _fetchSellerName(); 
   }
-
-  // ✅ This function now fetches the seller's name using the userId
   Future<void> _fetchSellerName() async {
     if (widget.userId.isEmpty) {
       setState(() {
@@ -50,7 +48,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     try {
       final data = await Supabase.instance.client
           .from('profiles')
-          .select('full_name') // ✅ Correct use of select for a single query
+          .select('full_name') 
           .eq('id', widget.userId)
           .single();
       if (mounted) {
@@ -66,7 +64,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
           _isLoading = false;
         });
       }
-      print('Error fetching seller name: $e'); // Log the error for debugging
+      print('Error fetching seller name: $e'); 
     }
   }
 
@@ -136,7 +134,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
                   ),
-                  child: _isLoading // ✅ Show loading spinner while fetching seller name
+                  child: _isLoading 
                       ? const Center(child: CircularProgressIndicator())
                       : Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,7 +167,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                               contentPadding: EdgeInsets.zero,
                               leading: const CircleAvatar(radius: 24, backgroundColor: Colors.grey, child: Icon(Icons.person, color: Colors.white)),
                               title: Text(
-                                _sellerName, // ✅ Display the fetched seller name
+                                _sellerName, 
                                 style: GoogleFonts.workSans(fontWeight: FontWeight.w600),
                               ),
                               subtitle: Text('Verified Seller', style: GoogleFonts.workSans(color: Colors.grey)),

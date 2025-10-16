@@ -28,10 +28,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     
     try {
-      // ✅ FIX: Check if the user exists before getting the ID
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) {
-        // If user is logged out, don't try to fetch a profile
         setState(() { _isLoading = false; });
         return;
       }
@@ -182,7 +180,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildProfileHeader() {
     final avatarUrl = _profileData?['avatar_url'];
     final fullName = _profileData?['full_name'] ?? 'No Name';
-    // ✅ FIX: Use the null-aware operator '?.' to safely access the email
     final email = Supabase.instance.client.auth.currentUser?.email ?? 'No Email';
 
     return Container(

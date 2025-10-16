@@ -36,7 +36,7 @@ class _AdminApprovalScreenState extends State<AdminApprovalScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Pet has been ${newStatus}d!'), backgroundColor: Colors.green),
         );
-        // Refresh the list
+      
         setState(() {
           _pendingPetsFuture = _fetchPendingPets();
         });

@@ -26,19 +26,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     }
 
     try {
-      // This sends the magic link
       await Supabase.instance.client.auth.resetPasswordForEmail(
         email,
-        // This must match the deep link you set up in AndroidManifest.xml
         redirectTo: 'io.supabase.petmarket://login-callback',
       );
 
       if (mounted) {
-        // ✅ UPDATED MESSAGE: Tell the user a LINK was sent, not an OTP.
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Password reset link sent! Please check your email.'), backgroundColor: Colors.green),
         );
-        _emailController.clear(); // Clear the field after sending
+        _emailController.clear(); 
       }
     } on AuthException catch (error) {
       if (mounted) {
@@ -57,8 +54,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (mounted) {
       setState(() { _isLoading = false; });
     }
-    // ✅ REMOVED: The line that navigates immediately has been deleted.
-    // Navigator.pushNamed(context, '/newpassword', arguments: email); // <-- THIS LINE IS GONE
   }
 
   @override

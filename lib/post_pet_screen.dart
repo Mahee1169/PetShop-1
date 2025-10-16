@@ -82,7 +82,7 @@ class _PostPetScreenState extends State<PostPetScreen> {
         'category': _selectedCategory,
         'user_id': userId,
         'description': _descriptionController.text.trim(),
-        'status': 'pending', // Default status for new posts
+        'status': 'pending', 
       });
 
       if (!mounted) return;
@@ -202,7 +202,6 @@ class _PostPetScreenState extends State<PostPetScreen> {
               break;
           }
         },
-        // ✅ FIX 2: Added the required 'items' property
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Browse'),
@@ -213,7 +212,6 @@ class _PostPetScreenState extends State<PostPetScreen> {
     );
   }
 
-  // ✅ FIX 1: Added the missing helper methods below
 
   Widget _buildTextField(TextEditingController controller, String hintText, {int maxLines = 1, TextInputType? keyboardType}) {
     return TextField(

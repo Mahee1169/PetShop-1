@@ -3,16 +3,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pet_details_screen.dart';
-import 'profile_provider.dart'; // Make sure this path is correct
+import 'profile_provider.dart'; 
 
-class HomeScreen extends StatefulWidget { // ✅ CORRECTED CLASS NAME
+class HomeScreen extends StatefulWidget { 
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState(); // ✅ CORRECTED STATE NAME
+  State<HomeScreen> createState() => _HomeScreenState(); 
 }
 
-class _HomeScreenState extends State<HomeScreen> { // ✅ CORRECTED STATE NAME
+class _HomeScreenState extends State<HomeScreen> { 
   final _petsStream = Supabase.instance.client
       .from('pets')
       .stream(primaryKey: ['id'])
@@ -22,9 +22,8 @@ class _HomeScreenState extends State<HomeScreen> { // ✅ CORRECTED STATE NAME
   @override
   Widget build(BuildContext context) {
     final profileProvider = Provider.of<ProfileProvider>(context);
-    final userName = profileProvider.fullName; // For the personalized welcome message
-    final isAdmin = profileProvider.role == 'admin'; // For potential admin features
-
+    final userName = profileProvider.fullName; 
+    final isAdmin = profileProvider.role == 'admin'; 
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -42,7 +41,6 @@ class _HomeScreenState extends State<HomeScreen> { // ✅ CORRECTED STATE NAME
             children: [
               _buildHeader(),
               const SizedBox(height: 24),
-              // Personalized Welcome Message
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Text(
@@ -108,7 +106,6 @@ class _HomeScreenState extends State<HomeScreen> { // ✅ CORRECTED STATE NAME
         onTap: (index) {
           switch (index) {
             case 0:
-              // Already on Home
               break;
             case 1:
               Navigator.pushReplacementNamed(context, '/browse');

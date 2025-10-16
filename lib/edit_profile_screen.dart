@@ -15,7 +15,7 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _nameController = TextEditingController();
-  bool _isLoading = true; // Start with loading true
+  bool _isLoading = true; 
   XFile? _selectedImageFile;
   String? _currentAvatarUrl;
 
@@ -126,7 +126,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      // ✅ WRAPPED the body in a Container with the gradient
       body: Container(
          width: double.infinity,
          height: double.infinity,

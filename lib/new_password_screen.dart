@@ -33,14 +33,11 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
     }
 
     try {
-      // Since the user arrived here via the magic link, they are authenticated.
-      // We can now update their password directly.
       await Supabase.instance.client.auth.updateUser(
         UserAttributes(password: password),
       );
 
       if (mounted) {
-        // ✅ TYPO FIXED HERE
         Navigator.pushNamedAndRemoveUntil(context, '/password-reset-success', (route) => false);
       }
     } on AuthException catch (error) {

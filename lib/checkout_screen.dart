@@ -33,8 +33,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
-    
-    // ✅ THIS IS THE UPDATED CALCULATION LOGIC
     double total = 0.0;
     for (var item in cart.items.values) {
       String rawPrice = item.price.replaceAll('৳', '').replaceAll(',', '');

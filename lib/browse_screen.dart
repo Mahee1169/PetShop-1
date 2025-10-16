@@ -111,7 +111,6 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 ),
               ),
             ),
-            // ✅ CATEGORY PILLS ARE BACK
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),

@@ -85,11 +85,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context, listen: false);
-    
-    // ✅ FIX: Corrected the total price calculation
     double total = 0.0;
     for (var item in cart.items.values) {
-      // Look for the Taka sign '৳' instead of '$'
       String rawPrice = item.price.replaceAll('৳', '').replaceAll(',', '');
       total += double.tryParse(rawPrice) ?? 0.0;
     }
@@ -128,7 +125,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text('Amount to Pay:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    // ✅ FIX: Display the total with the Taka sign
                     Text(
                       '৳${total.toStringAsFixed(2)}',
                       style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF2ECC71)),

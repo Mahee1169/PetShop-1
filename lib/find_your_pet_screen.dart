@@ -8,7 +8,6 @@ class FindYourPetScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        // The beautiful gradient background
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
@@ -23,17 +22,12 @@ class FindYourPetScreen extends StatelessWidget {
             stops: [0.0, 0.5, 1.0],
           ),
         ),
-        // SafeArea ensures content is not blocked by notches or system bars
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 30.0),
-            // ✅ A Column with Spacers to create the balanced layout
             child: Column(
               children: [
-                // This Spacer pushes the paw icon down from the top
                 const Spacer(flex: 2),
-
-                // Your main paw icon, now perfectly centered in the available space
                 Container(
                   width: 120,
                   height: 120,
@@ -61,11 +55,7 @@ class FindYourPetScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-
-                // This Spacer pushes the text and button content down to the bottom
                 const Spacer(flex: 3),
-
-                // Main Heading
                 Text(
                   'Find Your Pet',
                   style: GoogleFonts.workSans(
@@ -75,8 +65,6 @@ class FindYourPetScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                // Subheading
                 Text(
                   'Make your bonding relationship between human & pets',
                   textAlign: TextAlign.center,
@@ -86,8 +74,6 @@ class FindYourPetScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 50),
-
-                // Full-width "Get Started" Button
                 SizedBox(
                   width: double.infinity,
                   height: 55,
@@ -119,8 +105,6 @@ class FindYourPetScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-
-                // Padding for the bottom of the screen
                 const SizedBox(height: 40),
               ],
             ),

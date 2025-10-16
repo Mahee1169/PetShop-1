@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-
-// Assuming you have a login screen to return to, 
-// using FindYourPetScreen as a simple placeholder for navigation destination.
 import 'find_your_pet_screen.dart'; 
 
 class PasswordResetSuccessScreen extends StatelessWidget {
@@ -35,8 +32,6 @@ class PasswordResetSuccessScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Spacer(flex: 2),
-
-                // Success Checkmark Icon
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -57,8 +52,6 @@ class PasswordResetSuccessScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 40),
-
-                // Success Message
                 const Text(
                   'Password Changed!',
                   style: TextStyle(
@@ -78,11 +71,8 @@ class PasswordResetSuccessScreen extends StatelessWidget {
                 ),
 
                 const Spacer(flex: 3),
-
-                // Go to Login Button
                 GestureDetector(
                   onTap: () {
-                    // Navigate to main app (or login screen) and clear the stack
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(

@@ -18,16 +18,12 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
     super.initState();
     _ordersFuture = _fetchAllOrders();
   }
-
-  // Fetches ALL orders for the admin
   Future<List<Map<String, dynamic>>> _fetchAllOrders() async {
     return await Supabase.instance.client
         .from('orders')
         .select()
         .order('created_at', ascending: false);
   }
-
-  // Updates the status of an order
   Future<void> _updateOrderStatus(int orderId, String newStatus) async {
     try {
       await Supabase.instance.client
@@ -39,15 +35,12 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Order status updated to $newStatus'), backgroundColor: Colors.green),
         );
-        setState(() { _ordersFuture = _fetchAllOrders(); }); // Refresh the list
+        setState(() { _ordersFuture = _fetchAllOrders(); });
       }
     } catch (error) { /* Handle error */ }
   }
-
-  // Deletes an order
   Future<void> _deleteOrder(int orderId) async {
     try {
-      // Note: You may need to delete from 'order_items' first if you have row-level security with restrictions
       await Supabase.instance.client.from('order_items').delete().eq('order_id', orderId);
       await Supabase.instance.client.from('orders').delete().eq('id', orderId);
 
@@ -55,7 +48,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Order deleted successfully'), backgroundColor: Colors.green),
         );
-        setState(() { _ordersFuture = _fetchAllOrders(); }); // Refresh the list
+        setState(() { _ordersFuture = _fetchAllOrders(); });
       }
     } catch (error) { /* Handle error */ }
   }

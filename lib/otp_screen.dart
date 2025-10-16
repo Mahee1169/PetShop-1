@@ -14,8 +14,6 @@ class _OtpScreenState extends State<OtpScreen> {
 
   Future<void> _verifyOtp() async {
     setState(() { _isLoading = true; });
-
-    // Get the email that was passed from the SignUpScreen
     final email = ModalRoute.of(context)!.settings.arguments as String?;
     final otp = _otpController.text.trim();
 
@@ -26,16 +24,12 @@ class _OtpScreenState extends State<OtpScreen> {
     }
 
     try {
-      // ✅ This is the key function to verify the OTP
       final AuthResponse res = await Supabase.instance.client.auth.verifyOTP(
-        type: OtpType.signup, // Specify that this is a signup OTP
+        type: OtpType.signup,
         token: otp,
         email: email,
       );
-
-      // If verification is successful, res.user will not be null, and the user is logged in!
       if (mounted && res.user != null) {
-        // Go to home screen and clear all previous routes
         Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
       }
     } on AuthException catch (error) {
@@ -55,7 +49,6 @@ class _OtpScreenState extends State<OtpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // A simple UI for OTP entry
     return Scaffold(
       appBar: AppBar(title: const Text('Enter OTP')),
       body: Center(
